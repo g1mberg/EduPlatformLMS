@@ -1,0 +1,72 @@
+@model IReadOnlyList<EduPlatform.Domain.Entities.LessonAttachment>
+@{
+    var lesson = (EduPlatform.Domain.Entities.Lesson)ViewData["Lesson"]!;
+    ViewData["Title"] = $"Файлы урока: {lesson.Title}";
+    ViewData["DashboardArea"] = "instructor";
+    Layout = "_DashboardLayout";
+    var toast = TempData["Toast"] as string;
+}
+
+<div class="breadcrumb-bar text-center">
+    <div class="container">
+        <h2 class="breadcrumb-title mb-2">Файлы урока</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb justify-content-center mb-0">
+                <li class="breadcrumb-item"><a href="/instructor/courses">Мои курсы</a></li>
+                <li class="breadcrumb-item"><a href="/instructor/courses/@lesson.Section.CourseId/tests">@lesson.Section.Course.Title</a></li>
+                <li class="breadcrumb-item active">@lesson.Title</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container" style="max-width: 800px;">
+
+        @if (!string.IsNullOrEmpty(toast))
+        {
+            <div class="alert alert-info">@toast</div>
+        }
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="mb-3">Загрузить файл</h5>
+                <form method="post" action="/instructor/lessons/@lesson.Id/attachments/upload" enctype="multipart/form-data" class="d-flex gap-2 align-items-center">
+                    @Html.AntiForgeryToken()
+                    <input type="file" name="file" class="form-control" required />
+                    <button type="submit" class="btn btn-primary"><i class="isax isax-cloud-add me-1"></i>Загрузить</button>
+                </form>
+                <div class="form-text mt-2">Максимум 50 МБ на файл. PDF, изображения, архивы — всё подойдёт.</div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h5 class="mb-3">Файлы (@Model.Count)</h5>
+                @if (Model.Count == 0)
+                {
+                    <p class="text-muted text-center py-3 mb-0">Файлов пока нет</p>
+                }
+                else
+                {
+                    <ul class="list-group">
+                        @foreach (var a in Model)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="isax isax-document me-2 text-primary"></i>
+                                    <a href="@a.FileUrl" target="_blank" class="link-default">@a.FileName</a>
+                                </div>
+                                <form method="post" action="/instructor/attachments/@a.Id/delete" class="m-0"
+                                      onsubmit="return confirm('Удалить файл «@a.FileName»?');">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-sm btn-outline-danger"><i class="isax isax-trash"></i></button>
+                                </form>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+</section>

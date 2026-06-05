@@ -1,7 +1,13 @@
-using dreams.Data;
+using EduPlatform.Infrastructure.Persistence;
 using dreams.Models.Courses;
-using dreams.Models.Entities;
-using dreams.Services;
+using EduPlatform.Domain.Entities;
+using EduPlatform.Application.Abstractions;
+using EduPlatform.Application.Services;
+using EduPlatform.Infrastructure.Audit;
+using EduPlatform.Infrastructure.Chat;
+using EduPlatform.Infrastructure.Email;
+using EduPlatform.Infrastructure.Logging;
+using EduPlatform.Infrastructure.Mongo;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -15,12 +21,15 @@ public class CoursesController : Controller
     private readonly ApplicationDbContext _db;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly UserActionLogger _audit;
+    private readonly NotificationService _notifications;
 
-    public CoursesController(ApplicationDbContext db, UserManager<ApplicationUser> userManager, UserActionLogger audit)
+    public CoursesController(ApplicationDbContext db, UserManager<ApplicationUser> userManager,
+        UserActionLogger audit, NotificationService notifications)
     {
         _db = db;
         _userManager = userManager;
         _audit = audit;
+        _notifications = notifications;
     }
 
     [HttpGet("")]
@@ -99,12 +108,36 @@ public class CoursesController : Controller
         // Не опубликованные курсы видны только владельцу
         if (!course.IsPublished && !isOwner) return NotFound();
 
+        // Отзывы: показываем одобренные + свой (даже неодобренный); агрегаты по одобренным
+        var reviews = await _db.Reviews
+            .Include(r => r.Student)
+            .Where(r => r.CourseId == course.Id && (r.IsApproved || r.StudentId == userId))
+            .OrderByDescending(r => r.CreatedAt)
+            .Take(50)
+            .ToListAsync();
+
+        var approved = reviews.Where(r => r.IsApproved).ToList();
+        var histogram = new int[5]; // index 0 = 5 stars
+        foreach (var r in approved)
+        {
+            var idx = 5 - Math.Clamp(r.Rating, 1, 5);
+            histogram[idx]++;
+        }
+
+        Review? myReview = userId is null ? null : reviews.FirstOrDefault(r => r.StudentId == userId);
+        bool canLeave = isEnrolled && !isOwner && myReview is null;
+
         var vm = new CourseDetailsViewModel
         {
             Course = course,
             IsEnrolled = isEnrolled,
             IsOwner = isOwner,
-            LessonsCount = course.Sections.Sum(s => s.Lessons.Count)
+            LessonsCount = course.Sections.Sum(s => s.Lessons.Count),
+            Reviews = reviews,
+            ReviewsCount = approved.Count,
+            MyReview = myReview,
+            CanLeaveReview = canLeave,
+            RatingHistogram = histogram
         };
         return View(vm);
     }
@@ -139,6 +172,10 @@ public class CoursesController : Controller
             course.StudentsCount += 1;
             await _db.SaveChangesAsync();
             await _audit.LogAsync("course.enroll", "Course", course.Id.ToString(), course.Title);
+            var student = await _userManager.FindByIdAsync(userId.ToString());
+            await _notifications.NotifyAsync(course.InstructorId,
+                $"Новая запись на курс «{course.Title}»",
+                $"{student?.FullName ?? "Студент"} только что записался на ваш курс.");
             TempData["Toast"] = $"Вы записаны на курс «{course.Title}».";
         }
 

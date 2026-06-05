@@ -1,4 +1,4 @@
-@model IReadOnlyList<dreams.Models.Entities.Course>
+@model IReadOnlyList<EduPlatform.Domain.Entities.Course>
 @{
     ViewData["Title"] = L["Instructor.MyCoursesTitle"].Value;
     ViewData["DashboardArea"] = "instructor";
@@ -44,11 +44,16 @@
                     <a href="/instructor/subscription" class="link-secondary">@L["Instructor.ChangePlan"]</a>
                 </p>
             </div>
-            <a href="/instructor/courses/wizard"
-               class="btn btn-secondary @(atLimit ? "disabled" : "")"
-               aria-disabled="@(atLimit ? "true" : "false")">
-                <i class="isax isax-add me-1"></i>@L["Instructor.CreateCourse"]
-            </a>
+            <div class="d-flex gap-2">
+                <a href="/instructor/dashboard" class="btn btn-outline-secondary">
+                    <i class="isax isax-chart-21 me-1"></i>Дашборд
+                </a>
+                <a href="/instructor/courses/wizard"
+                   class="btn btn-secondary @(atLimit ? "disabled" : "")"
+                   aria-disabled="@(atLimit ? "true" : "false")">
+                    <i class="isax isax-add me-1"></i>@L["Instructor.CreateCourse"]
+                </a>
+            </div>
         </div>
 
         @if (Model.Count == 0)
@@ -112,6 +117,9 @@
                                         </a>
                                         <a href="/instructor/courses/@c.Id/tests" class="btn btn-sm btn-outline-secondary" title="Тесты">
                                             <i class="isax isax-clipboard-text"></i>
+                                        </a>
+                                        <a href="/instructor/courses/@c.Id/analytics" class="btn btn-sm btn-outline-secondary" title="Аналитика">
+                                            <i class="isax isax-chart-21"></i>
                                         </a>
                                         <form method="post" action="/instructor/courses/@c.Id/publish" class="m-0">
                                             @Html.AntiForgeryToken()

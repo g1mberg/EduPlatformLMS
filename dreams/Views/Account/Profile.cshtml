@@ -1,0 +1,122 @@
+@model dreams.Controllers.ProfileViewModel
+@{
+    ViewData["Title"] = "Профиль";
+    ViewData["DashboardArea"] = "student";
+    Layout = "_DashboardLayout";
+    var roles = ViewData["Roles"] as IList<string> ?? new List<string>();
+    var is2fa = (bool)(ViewData["Is2FA"] ?? false);
+    var toast = TempData["Toast"] as string;
+}
+
+<div class="breadcrumb-bar text-center">
+    <div class="container">
+        <h2 class="breadcrumb-title mb-2">Профиль</h2>
+        <nav>
+            <ol class="breadcrumb justify-content-center mb-0">
+                <li class="breadcrumb-item"><a href="/">Главная</a></li>
+                <li class="breadcrumb-item active">Профиль</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container" style="max-width: 900px;">
+        @if (!string.IsNullOrEmpty(toast))
+        {
+            <div class="alert alert-info">@toast</div>
+        }
+
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <img class="rounded-circle mb-3"
+                             src="@(string.IsNullOrEmpty(Model.AvatarUrl) ? "/assets/img/user/user-29.jpg" : Model.AvatarUrl)"
+                             alt="" style="width:120px; height:120px; object-fit:cover;">
+                        <h5 class="mb-1">@(Model.FullName ?? "—")</h5>
+                        <p class="text-muted small mb-2">@Model.Email</p>
+                        @foreach (var r in roles)
+                        {
+                            <span class="badge text-bg-secondary me-1">@r</span>
+                        }
+                        <hr/>
+                        <p class="mb-1 small text-muted">Зарегистрирован</p>
+                        <p class="fw-semibold mb-3">@Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")</p>
+                        <p class="mb-1 small text-muted">Баланс кредитов</p>
+                        <p class="fw-bold text-secondary mb-3">@Model.Credits.ToString("N0") кр.</p>
+                        <p class="mb-1 small text-muted">2FA</p>
+                        @if (is2fa)
+                        {
+                            <span class="badge text-bg-success">Включена</span>
+                        }
+                        else
+                        {
+                            <span class="badge text-bg-warning">Отключена</span>
+                        }
+                        <div class="mt-3">
+                            <a href="/account/security" class="btn btn-outline-secondary btn-sm w-100">Настройки безопасности</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-body">
+                        <h5 class="mb-3">Личные данные</h5>
+                        <form method="post" action="/account/profile">
+                            @Html.AntiForgeryToken()
+                            <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input value="@Model.Email" disabled class="form-control" />
+                                <div class="form-text">Email менять нельзя — только через поддержку.</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Имя</label>
+                                <input name="FullName" value="@Model.FullName" class="form-control" maxlength="160" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Ссылка на аватар</label>
+                                <input name="AvatarUrl" value="@Model.AvatarUrl" class="form-control" placeholder="https://…" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">О себе</label>
+                                <textarea name="Bio" rows="4" class="form-control" maxlength="1000">@Model.Bio</textarea>
+                                <div class="form-text">Отобразится на вашей публичной странице инструктора.</div>
+                            </div>
+                            <button type="submit" class="btn btn-primary"><i class="isax isax-tick-circle me-1"></i>Сохранить</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="mb-3">Смена пароля</h5>
+                        <form method="post" action="/account/password-change">
+                            @Html.AntiForgeryToken()
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <label class="form-label">Текущий</label>
+                                    <input name="currentPassword" type="password" class="form-control" required />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Новый</label>
+                                    <input name="newPassword" type="password" class="form-control" minlength="8" required />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Подтвердите</label>
+                                    <input name="confirmPassword" type="password" class="form-control" minlength="8" required />
+                                </div>
+                            </div>
+                            <div class="form-text mt-2">Минимум 8 символов.</div>
+                            <button type="submit" class="btn btn-outline-primary mt-3"><i class="isax isax-key me-1"></i>Сменить пароль</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

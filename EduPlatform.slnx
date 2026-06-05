@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="dreams/dreams.csproj" />
+  <Project Path="EduPlatform.Application/EduPlatform.Application.csproj" />
+  <Project Path="EduPlatform.Domain/EduPlatform.Domain.csproj" />
+  <Project Path="EduPlatform.Infrastructure/EduPlatform.Infrastructure.csproj" />
+</Solution>

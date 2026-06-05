@@ -1,0 +1,138 @@
+@model dreams.Models.Courses.CourseAnalyticsViewModel
+@{
+    var c = Model.Course;
+    ViewData["Title"] = $"Аналитика: {c.Title}";
+    ViewData["DashboardArea"] = "instructor";
+    Layout = "_DashboardLayout";
+    var completionPct = Model.EnrollmentsCount == 0 ? 0 : Math.Round(Model.CompletedCount * 100.0 / Model.EnrollmentsCount);
+}
+
+@section Styles {
+    <style>
+        .kpi { border:1px solid #eef0f7; border-radius:14px; padding:18px; background:#fff; }
+        .kpi .num { font-size:24px; font-weight:700; line-height:1; color:#4d44e0; }
+        .kpi .lbl { color:#6b7280; font-size:13px; margin-top:4px; }
+        .chart-bars { display:flex; align-items:flex-end; gap:14px; height:140px; padding:14px 4px 0; }
+        .chart-bars .bar-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; }
+        .chart-bars .bar { width:100%; background:linear-gradient(180deg,#6b62ff,#4d44e0); border-radius:8px 8px 0 0; min-height:4px; }
+        .chart-bars .bar-lbl { color:#6b7280; font-size:11px; }
+        .chart-bars .bar-num { color:#4d44e0; font-weight:600; font-size:12px; }
+        .section-card { background:#fff; border:1px solid #eef0f7; border-radius:14px; padding:20px; }
+    </style>
+}
+
+<div class="breadcrumb-bar text-center">
+    <div class="container">
+        <h2 class="breadcrumb-title mb-2">Аналитика курса</h2>
+        <nav>
+            <ol class="breadcrumb justify-content-center mb-0">
+                <li class="breadcrumb-item"><a href="/instructor/courses">Мои курсы</a></li>
+                <li class="breadcrumb-item active">@c.Title</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container">
+
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div>
+                <h4 class="mb-0">@c.Title</h4>
+                <p class="text-muted mb-0">@c.Category.Name · @Model.LessonsCount уроков · @(c.IsPublished ? "опубликован" : "черновик")</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/courses/@c.Slug" class="btn btn-outline-secondary"><i class="isax isax-eye me-1"></i>Открыть страницу</a>
+                <a href="/instructor/courses/@c.Id/edit" class="btn btn-outline-primary"><i class="isax isax-edit me-1"></i>Редактировать</a>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-xl-3 col-md-6"><div class="kpi"><div class="num">@Model.EnrollmentsCount</div><div class="lbl">студентов записано</div></div></div>
+            <div class="col-xl-3 col-md-6"><div class="kpi"><div class="num">@Model.AvgProgress%</div><div class="lbl">средний прогресс</div></div></div>
+            <div class="col-xl-3 col-md-6"><div class="kpi"><div class="num">@Model.CompletedCount</div><div class="lbl">завершили курс (@completionPct%)</div></div></div>
+            <div class="col-xl-3 col-md-6"><div class="kpi"><div class="num">@Model.Certificates</div><div class="lbl">сертификатов выдано</div></div></div>
+            <div class="col-xl-3 col-md-6"><div class="kpi"><div class="num">@c.AverageRating.ToString("0.0")</div><div class="lbl">средний рейтинг</div></div></div>
+            <div class="col-xl-3 col-md-6"><div class="kpi"><div class="num">@Model.Reviews.Count</div><div class="lbl">отзывов</div></div></div>
+            <div class="col-xl-3 col-md-6"><div class="kpi"><div class="num">@Model.Revenue.ToString("N0") кр.</div><div class="lbl">выручка (комиссия @Model.Commission.ToString("N0"))</div></div></div>
+            <div class="col-xl-3 col-md-6"><div class="kpi"><div class="num">@Model.AvgTestScore%</div><div class="lbl">средний балл тестов (@Model.TestAttempts попыток)</div></div></div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-12">
+                <div class="section-card">
+                    <h5 class="mb-2">Записи за последние 6 месяцев</h5>
+                    @{ var maxCnt = Model.MonthlyEnrollments.Max(m => (int?)m.Count) ?? 0; }
+                    <div class="chart-bars">
+                        @foreach (var p in Model.MonthlyEnrollments)
+                        {
+                            var pct = maxCnt == 0 ? 0 : (int)Math.Round(p.Count * 100.0 / maxCnt);
+                            <div class="bar-col">
+                                <div class="bar-num">@p.Count</div>
+                                <div class="bar" style="height:@(pct)%"></div>
+                                <div class="bar-lbl">@p.Label</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-6">
+                <div class="section-card h-100">
+                    <h5 class="mb-3">Последние записавшиеся</h5>
+                    @if (Model.RecentEnrollments.Count == 0)
+                    {
+                        <p class="text-muted">Нет данных.</p>
+                    }
+                    else
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var e in Model.RecentEnrollments)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <div>
+                                        <span class="fw-semibold">@e.Student.FullName</span>
+                                        <span class="text-muted small ms-2">@e.EnrolledAt.ToLocalTime().ToString("dd.MM HH:mm")</span>
+                                    </div>
+                                    <span class="badge text-bg-light">@e.ProgressPercent.ToString("0.#")%</span>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="section-card h-100">
+                    <h5 class="mb-3">Последние отзывы</h5>
+                    @if (Model.Reviews.Count == 0)
+                    {
+                        <p class="text-muted">Отзывов пока нет.</p>
+                    }
+                    else
+                    {
+                        foreach (var r in Model.Reviews.Take(5))
+                        {
+                            <div class="border-bottom pb-2 mb-2">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-semibold">@r.Student.FullName</span>
+                                    <span class="text-warning small">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            <i class="fa-solid fa-star @(i <= r.Rating ? "" : "text-muted opacity-25")"></i>
+                                        }
+                                    </span>
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(r.Text))
+                                {
+                                    <p class="text-muted small mb-0">@r.Text</p>
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

@@ -1,4 +1,4 @@
-using dreams.Models.Entities;
+using EduPlatform.Domain.Entities;
 
 namespace dreams.Models.Courses;
 

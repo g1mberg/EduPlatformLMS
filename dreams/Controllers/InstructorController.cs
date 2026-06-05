@@ -1,7 +1,13 @@
-using dreams.Data;
+using EduPlatform.Infrastructure.Persistence;
 using dreams.Models.Courses;
-using dreams.Models.Entities;
-using dreams.Services;
+using EduPlatform.Domain.Entities;
+using EduPlatform.Application.Abstractions;
+using EduPlatform.Application.Services;
+using EduPlatform.Infrastructure.Audit;
+using EduPlatform.Infrastructure.Chat;
+using EduPlatform.Infrastructure.Email;
+using EduPlatform.Infrastructure.Logging;
+using EduPlatform.Infrastructure.Mongo;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -18,17 +24,128 @@ public class InstructorController : Controller
     private readonly ApplicationDbContext _db;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly UserActionLogger _audit;
+    private readonly NotificationService _notifications;
 
-    public InstructorController(ApplicationDbContext db, UserManager<ApplicationUser> userManager, UserActionLogger audit)
+    public InstructorController(ApplicationDbContext db, UserManager<ApplicationUser> userManager,
+        UserActionLogger audit, NotificationService notifications)
     {
         _db = db;
         _userManager = userManager;
         _audit = audit;
+        _notifications = notifications;
     }
 
     [AllowAnonymous]
     [HttpGet("profile")]
     public IActionResult Profile() => View();
+
+    [HttpGet("dashboard")]
+    public async Task<IActionResult> Dashboard()
+    {
+        var userId = GetUserId();
+
+        var courses = await _db.Courses
+            .Where(c => c.InstructorId == userId)
+            .ToListAsync();
+
+        var courseIds = courses.Select(c => c.Id).ToList();
+
+        // Доход = сумма поступлений CoursePurchase инструктору минус комиссия (PlatformCommission)
+        var purchaseTxs = await _db.Transactions
+            .Where(t => t.RelatedCourseId != null && courseIds.Contains(t.RelatedCourseId!.Value)
+                        && (t.Type == TransactionType.CoursePurchase || t.Type == TransactionType.PlatformCommission))
+            .ToListAsync();
+
+        var revenuePerCourse = purchaseTxs
+            .Where(t => t.Type == TransactionType.CoursePurchase && t.UserId == userId)
+            .GroupBy(t => t.RelatedCourseId!.Value)
+            .ToDictionary(g => g.Key, g => g.Sum(t => t.Amount));
+
+        var commissionTotal = purchaseTxs
+            .Where(t => t.Type == TransactionType.PlatformCommission)
+            .Sum(t => Math.Abs(t.Amount));
+
+        var totalRevenue = revenuePerCourse.Values.Sum();
+
+        var topCourses = courses
+            .OrderByDescending(c => c.StudentsCount)
+            .Take(5)
+            .Select(c => new DashboardCourseRow
+            {
+                Id = c.Id,
+                Slug = c.Slug,
+                Title = c.Title,
+                Students = c.StudentsCount,
+                AverageRating = c.AverageRating,
+                Revenue = revenuePerCourse.GetValueOrDefault(c.Id),
+                IsPublished = c.IsPublished
+            })
+            .ToList();
+
+        var recent = await _db.Enrollments
+            .Where(e => courseIds.Contains(e.CourseId))
+            .OrderByDescending(e => e.EnrolledAt)
+            .Take(10)
+            .Select(e => new DashboardEnrollment
+            {
+                StudentName = e.Student.FullName ?? e.Student.UserName ?? "",
+                CourseTitle = e.Course.Title,
+                CourseSlug = e.Course.Slug,
+                At = e.EnrolledAt,
+                ProgressPercent = e.ProgressPercent
+            })
+            .ToListAsync();
+
+        var since = DateTime.UtcNow.AddMonths(-5);
+        since = new DateTime(since.Year, since.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var monthly = await _db.Enrollments
+            .Where(e => courseIds.Contains(e.CourseId) && e.EnrolledAt >= since)
+            .GroupBy(e => new { e.EnrolledAt.Year, e.EnrolledAt.Month })
+            .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Count() })
+            .ToListAsync();
+
+        // Заполним 6 месяцев подряд (включая нули)
+        var monthlyFull = new List<DashboardMonthPoint>();
+        for (int i = 0; i < 6; i++)
+        {
+            var d = since.AddMonths(i);
+            var found = monthly.FirstOrDefault(m => m.Year == d.Year && m.Month == d.Month);
+            monthlyFull.Add(new DashboardMonthPoint
+            {
+                Year = d.Year,
+                Month = d.Month,
+                Count = found?.Count ?? 0
+            });
+        }
+
+        var activeSub = await _db.InstructorSubscriptions
+            .Include(s => s.Plan)
+            .Where(s => s.InstructorId == userId && s.IsActive &&
+                        (s.ExpiresAt == null || s.ExpiresAt > DateTime.UtcNow))
+            .OrderByDescending(s => s.StartedAt)
+            .FirstOrDefaultAsync();
+
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+
+        var avgRating = courses.Count == 0 ? 0m : Math.Round(courses.Average(c => c.AverageRating), 2);
+
+        var vm = new InstructorDashboardViewModel
+        {
+            CoursesCount = courses.Count,
+            PublishedCount = courses.Count(c => c.IsPublished),
+            TotalStudents = courses.Sum(c => c.StudentsCount),
+            AverageRating = avgRating,
+            TotalRevenue = totalRevenue,
+            PlatformCommissionTotal = commissionTotal,
+            Credits = user?.Credits ?? 0,
+            ActivePlan = activeSub?.Plan.Code,
+            PlanExpires = activeSub?.ExpiresAt,
+            TopCourses = topCourses,
+            RecentEnrollments = recent,
+            MonthlyEnrollments = monthlyFull
+        };
+        return View(vm);
+    }
 
     [AllowAnonymous]
     [HttpGet("subscription")]
@@ -133,17 +250,10 @@ public class InstructorController : Controller
         if (!await _userManager.IsInRoleAsync(user, "Instructor"))
             await _userManager.AddToRoleAsync(user, "Instructor");
 
-        // Notification
-        _db.Notifications.Add(new Notification
-        {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            Title = "Подписка активирована",
-            Message = $"План {plan.Code} активирован до {sub.ExpiresAt:dd.MM.yyyy}.",
-            CreatedAt = DateTime.UtcNow
-        });
-
         await _db.SaveChangesAsync();
+        await _notifications.NotifyAsync(userId,
+            "Подписка активирована",
+            $"План {plan.Code} активирован до {sub.ExpiresAt:dd.MM.yyyy}.");
         await _audit.LogAsync("subscription.buy", "SubscriptionPlan", plan.Id.ToString(), $"{plan.Code}, -{plan.PriceCredits} cr");
 
         TempData["Toast"] = $"План {plan.Code} активирован до {sub.ExpiresAt:dd.MM.yyyy}.";
@@ -532,6 +642,92 @@ public class InstructorController : Controller
         return RedirectToAction(nameof(Courses));
     }
 
+    // ---------- Аналитика по курсу ----------
+
+    [HttpGet("courses/{id:guid}/analytics")]
+    public async Task<IActionResult> CourseAnalytics(Guid id)
+    {
+        var userId = GetUserId();
+        var course = await _db.Courses
+            .Include(c => c.Sections).ThenInclude(s => s.Lessons).ThenInclude(l => l.Test)
+            .FirstOrDefaultAsync(c => c.Id == id && c.InstructorId == userId);
+        if (course is null) return NotFound();
+
+        var enrollments = await _db.Enrollments
+            .Include(e => e.Student)
+            .Where(e => e.CourseId == id)
+            .OrderByDescending(e => e.EnrolledAt)
+            .ToListAsync();
+
+        var revenue = await _db.Transactions
+            .Where(t => t.Type == TransactionType.CoursePurchase && t.RelatedCourseId == id && t.UserId == userId)
+            .SumAsync(t => (decimal?)t.Amount) ?? 0;
+
+        var commission = await _db.Transactions
+            .Where(t => t.Type == TransactionType.PlatformCommission && t.RelatedCourseId == id)
+            .SumAsync(t => (decimal?)Math.Abs(t.Amount)) ?? 0;
+
+        var certificates = await _db.Certificates.CountAsync(c => c.CourseId == id);
+
+        var reviews = await _db.Reviews
+            .Include(r => r.Student)
+            .Where(r => r.CourseId == id)
+            .OrderByDescending(r => r.CreatedAt)
+            .Take(20)
+            .ToListAsync();
+
+        // Среднее по тестам курса
+        var testIds = course.Sections.SelectMany(s => s.Lessons).Where(l => l.Test != null).Select(l => l.Test!.Id).ToList();
+        decimal avgTestScore = 0;
+        int testAttemptsCount = 0;
+        if (testIds.Count > 0)
+        {
+            var attempts = await _db.TestAttempts
+                .Where(a => testIds.Contains(a.TestId))
+                .ToListAsync();
+            testAttemptsCount = attempts.Count;
+            avgTestScore = attempts.Count == 0 ? 0 : Math.Round((decimal)attempts.Average(a => a.Score), 1);
+        }
+
+        var monthlyEnroll = enrollments
+            .Where(e => e.EnrolledAt >= DateTime.UtcNow.AddMonths(-5))
+            .GroupBy(e => new { e.EnrolledAt.Year, e.EnrolledAt.Month })
+            .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Count() })
+            .ToList();
+        var since = DateTime.UtcNow.AddMonths(-5);
+        since = new DateTime(since.Year, since.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var monthly = Enumerable.Range(0, 6).Select(i =>
+        {
+            var d = since.AddMonths(i);
+            return new CourseAnalyticsMonth
+            {
+                Label = $"{d.Year}-{d.Month:D2}",
+                Count = monthlyEnroll.FirstOrDefault(x => x.Year == d.Year && x.Month == d.Month)?.Count ?? 0
+            };
+        }).ToList();
+
+        var avgProgress = enrollments.Count == 0 ? 0m : Math.Round(enrollments.Average(e => e.ProgressPercent), 1);
+        var completedCount = enrollments.Count(e => e.CompletedAt.HasValue);
+
+        var vm = new CourseAnalyticsViewModel
+        {
+            Course = course,
+            EnrollmentsCount = enrollments.Count,
+            CompletedCount = completedCount,
+            AvgProgress = avgProgress,
+            Certificates = certificates,
+            Revenue = revenue,
+            Commission = commission,
+            TestAttempts = testAttemptsCount,
+            AvgTestScore = avgTestScore,
+            Reviews = reviews,
+            RecentEnrollments = enrollments.Take(15).ToList(),
+            MonthlyEnrollments = monthly,
+            LessonsCount = course.Sections.Sum(s => s.Lessons.Count)
+        };
+        return View(vm);
+    }
+
     // ---------- Тесты к урокам ----------
 
     [HttpGet("courses/{id:guid}/tests")]
@@ -666,6 +862,18 @@ public class InstructorController : Controller
         for (int i = 0; i < vm.Questions.Count; i++)
         {
             var q = vm.Questions[i];
+            if (q.Type == QuestionType.Text)
+            {
+                // Для текстового вопроса ожидаем ровно один Option с непустым Text — это эталонный ответ
+                var correct = q.Options.FirstOrDefault();
+                if (correct is null || string.IsNullOrWhiteSpace(correct.Text))
+                    ModelState.AddModelError($"Questions[{i}].Options", $"Вопрос {i + 1}: укажите эталонный ответ");
+                else
+                {
+                    q.Options = new List<TestOptionInput> { new() { Text = correct.Text.Trim(), IsCorrect = true } };
+                }
+                continue;
+            }
             if (q.Options.Count < 2)
                 ModelState.AddModelError($"Questions[{i}].Options", $"Вопрос {i + 1}: нужно минимум 2 варианта");
             else if (!q.Options.Any(o => o.IsCorrect))
@@ -790,6 +998,106 @@ public class InstructorController : Controller
             .FirstOrDefaultAsync();
         // Если активной подписки нет — считаем Free, тесты запрещены.
         return plan?.AllowsTests ?? false;
+    }
+
+    // ---------- Прикреплённые файлы к уроку ----------
+
+    [HttpGet("lessons/{lessonId:guid}/attachments")]
+    public async Task<IActionResult> Attachments(Guid lessonId)
+    {
+        var userId = GetUserId();
+        var lesson = await _db.Lessons
+            .Include(l => l.Section).ThenInclude(s => s.Course)
+            .Include(l => l.Attachments)
+            .FirstOrDefaultAsync(l => l.Id == lessonId);
+        if (lesson is null || lesson.Section.Course.InstructorId != userId) return NotFound();
+
+        ViewData["Lesson"] = lesson;
+        return View(lesson.Attachments.ToList());
+    }
+
+    [HttpPost("lessons/{lessonId:guid}/attachments/upload")]
+    [ValidateAntiForgeryToken]
+    [RequestSizeLimit(50_000_000)] // 50 MB
+    public async Task<IActionResult> UploadAttachment(Guid lessonId, IFormFile? file)
+    {
+        var userId = GetUserId();
+        var lesson = await _db.Lessons
+            .Include(l => l.Section).ThenInclude(s => s.Course)
+            .FirstOrDefaultAsync(l => l.Id == lessonId);
+        if (lesson is null || lesson.Section.Course.InstructorId != userId) return NotFound();
+
+        if (file is null || file.Length == 0)
+        {
+            TempData["Toast"] = "Выберите файл.";
+            return RedirectToAction(nameof(Attachments), new { lessonId });
+        }
+        if (file.Length > 50_000_000)
+        {
+            TempData["Toast"] = "Максимум 50 МБ.";
+            return RedirectToAction(nameof(Attachments), new { lessonId });
+        }
+
+        var webRoot = HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().WebRootPath;
+        var dir = Path.Combine(webRoot, "uploads", "lessons", lessonId.ToString("N"));
+        Directory.CreateDirectory(dir);
+
+        var safeName = SanitizeFileName(Path.GetFileName(file.FileName));
+        if (string.IsNullOrEmpty(safeName)) safeName = "file";
+        var unique = $"{DateTime.UtcNow:yyyyMMddHHmmssfff}_{safeName}";
+        var fullPath = Path.Combine(dir, unique);
+        using (var stream = System.IO.File.Create(fullPath))
+            await file.CopyToAsync(stream);
+
+        var url = $"/uploads/lessons/{lessonId:N}/{Uri.EscapeDataString(unique)}";
+        _db.LessonAttachments.Add(new LessonAttachment
+        {
+            Id = Guid.NewGuid(),
+            LessonId = lessonId,
+            FileUrl = url,
+            FileName = safeName
+        });
+        await _db.SaveChangesAsync();
+        await _audit.LogAsync("lesson.attachment.upload", "Lesson", lessonId.ToString(), safeName);
+
+        TempData["Toast"] = $"Файл «{safeName}» загружен.";
+        return RedirectToAction(nameof(Attachments), new { lessonId });
+    }
+
+    [HttpPost("attachments/{id:guid}/delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAttachment(Guid id)
+    {
+        var userId = GetUserId();
+        var att = await _db.LessonAttachments
+            .Include(a => a.Lesson).ThenInclude(l => l.Section).ThenInclude(s => s.Course)
+            .FirstOrDefaultAsync(a => a.Id == id);
+        if (att is null || att.Lesson.Section.Course.InstructorId != userId) return NotFound();
+
+        var lessonId = att.LessonId;
+        var webRoot = HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().WebRootPath;
+        try
+        {
+            // FileUrl у нас вида /uploads/lessons/<id>/<file>
+            var rel = att.FileUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+            var full = Path.Combine(webRoot, rel);
+            if (System.IO.File.Exists(full)) System.IO.File.Delete(full);
+        }
+        catch { /* не критично — запись из БД всё равно удалим */ }
+
+        _db.LessonAttachments.Remove(att);
+        await _db.SaveChangesAsync();
+        TempData["Toast"] = "Файл удалён.";
+        return RedirectToAction(nameof(Attachments), new { lessonId });
+    }
+
+    private static string SanitizeFileName(string name)
+    {
+        var invalid = Path.GetInvalidFileNameChars();
+        var s = new string(name.Where(c => !invalid.Contains(c)).ToArray());
+        s = s.Replace(' ', '_');
+        if (s.Length > 200) s = s[^200..];
+        return s;
     }
 
     // ---------- helpers ----------

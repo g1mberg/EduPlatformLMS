@@ -1,7 +1,13 @@
-using dreams.Data;
+using EduPlatform.Infrastructure.Persistence;
 using dreams.Models.Courses;
-using dreams.Models.Entities;
-using dreams.Services;
+using EduPlatform.Domain.Entities;
+using EduPlatform.Application.Abstractions;
+using EduPlatform.Application.Services;
+using EduPlatform.Infrastructure.Audit;
+using EduPlatform.Infrastructure.Chat;
+using EduPlatform.Infrastructure.Email;
+using EduPlatform.Infrastructure.Logging;
+using EduPlatform.Infrastructure.Mongo;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -89,6 +95,7 @@ public class StudentController : Controller
 
         var lesson = await _db.Lessons
             .Include(l => l.Test)
+            .Include(l => l.Attachments)
             .Include(l => l.Section).ThenInclude(s => s.Course)
                 .ThenInclude(c => c.Sections.OrderBy(x => x.OrderIndex))
                     .ThenInclude(s => s.Lessons.OrderBy(x => x.OrderIndex))
@@ -236,22 +243,67 @@ public class StudentController : Controller
         foreach (var q in lesson.Test.Questions)
         {
             var formKey = $"q_{q.Id}";
-            var picked = Request.Form[formKey].ToString();
-            Guid? pickedId = Guid.TryParse(picked, out var pg) ? pg : null;
+            var raw = Request.Form[formKey];
 
-            var selected = pickedId.HasValue
-                ? q.Options.FirstOrDefault(o => o.Id == pickedId.Value)
-                : null;
-
-            attempt.Answers.Add(new StudentAnswer
+            if (q.Type == QuestionType.Text)
             {
-                Id = Guid.NewGuid(),
-                AttemptId = attempt.Id,
-                QuestionId = q.Id,
-                SelectedOptionId = selected?.Id
-            });
-
-            if (selected?.IsCorrect == true) correct++;
+                var text = raw.ToString().Trim();
+                var expected = q.Options.FirstOrDefault()?.Text?.Trim() ?? "";
+                var match = !string.IsNullOrEmpty(text) && !string.IsNullOrEmpty(expected) &&
+                            string.Equals(text, expected, StringComparison.OrdinalIgnoreCase);
+                attempt.Answers.Add(new StudentAnswer
+                {
+                    Id = Guid.NewGuid(),
+                    AttemptId = attempt.Id,
+                    QuestionId = q.Id,
+                    SelectedOptionId = null,
+                    TextAnswer = text
+                });
+                if (match) correct++;
+            }
+            else if (q.Type == QuestionType.MultipleChoice)
+            {
+                var pickedIds = raw.Select(s => Guid.TryParse(s, out var g) ? g : (Guid?)null)
+                                   .Where(g => g.HasValue).Select(g => g!.Value).ToHashSet();
+                var correctIds = q.Options.Where(o => o.IsCorrect).Select(o => o.Id).ToHashSet();
+                var isCorrect = pickedIds.Count > 0 && pickedIds.SetEquals(correctIds);
+                // Запишем все выбранные варианты как несколько StudentAnswer (по одному на opt)
+                foreach (var oid in pickedIds)
+                {
+                    attempt.Answers.Add(new StudentAnswer
+                    {
+                        Id = Guid.NewGuid(),
+                        AttemptId = attempt.Id,
+                        QuestionId = q.Id,
+                        SelectedOptionId = oid
+                    });
+                }
+                if (pickedIds.Count == 0)
+                {
+                    attempt.Answers.Add(new StudentAnswer
+                    {
+                        Id = Guid.NewGuid(),
+                        AttemptId = attempt.Id,
+                        QuestionId = q.Id
+                    });
+                }
+                if (isCorrect) correct++;
+            }
+            else
+            {
+                Guid? pickedId = Guid.TryParse(raw.ToString(), out var pg) ? pg : null;
+                var selected = pickedId.HasValue
+                    ? q.Options.FirstOrDefault(o => o.Id == pickedId.Value)
+                    : null;
+                attempt.Answers.Add(new StudentAnswer
+                {
+                    Id = Guid.NewGuid(),
+                    AttemptId = attempt.Id,
+                    QuestionId = q.Id,
+                    SelectedOptionId = selected?.Id
+                });
+                if (selected?.IsCorrect == true) correct++;
+            }
         }
 
         attempt.Score = total == 0 ? 0 : (int)Math.Round(correct * 100.0 / total);

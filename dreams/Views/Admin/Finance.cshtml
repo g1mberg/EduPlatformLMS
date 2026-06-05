@@ -1,0 +1,156 @@
+@model dreams.Controllers.FinanceVm
+@using EduPlatform.Domain.Entities
+@{
+    ViewData["Title"] = "Финансы";
+    ViewData["PageTitle"] = "Финансы платформы";
+    ViewData["AdminSection"] = "finance";
+    Layout = "_AdminLayout";
+
+    string TypeLabel(TransactionType t) => t switch
+    {
+        TransactionType.TopUp => "Пополнение",
+        TransactionType.CoursePurchase => "Покупка курса",
+        TransactionType.PlatformCommission => "Комиссия платформы",
+        TransactionType.SubscriptionPayment => "Подписка",
+        TransactionType.InstructorPayout => "Выплата инструктору",
+        _ => t.ToString()
+    };
+    string TypeColor(TransactionType t) => t switch
+    {
+        TransactionType.PlatformCommission => "text-bg-success",
+        TransactionType.CoursePurchase => "text-bg-primary",
+        TransactionType.SubscriptionPayment => "text-bg-warning",
+        TransactionType.TopUp => "text-bg-info",
+        TransactionType.InstructorPayout => "text-bg-secondary",
+        _ => "text-bg-secondary"
+    };
+}
+
+<div class="row g-3 mb-3">
+    <div class="col-xl-3 col-md-6">
+        <div class="adm-card p-3">
+            <div class="text-muted small">Доход платформы (всё время)</div>
+            <div class="display-6 fw-bold text-success">@Model.CommissionAll.ToString("N0") кр.</div>
+            <div class="text-muted small">за последние @Model.Days дн.: <b>@Model.CommissionWindow.ToString("N0")</b></div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="adm-card p-3">
+            <div class="text-muted small">Покупки курсов</div>
+            <div class="display-6 fw-bold text-primary">@Model.CoursePurchasesAll.ToString("N0") кр.</div>
+            <div class="text-muted small">общий оборот по курсам</div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="adm-card p-3">
+            <div class="text-muted small">Выручка с подписок</div>
+            <div class="display-6 fw-bold text-warning">@Model.SubPaymentsAll.ToString("N0") кр.</div>
+            <div class="text-muted small">платные планы Basic/Pro</div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="adm-card p-3">
+            <div class="text-muted small">Пополнения кредитов</div>
+            <div class="display-6 fw-bold text-info">@Model.TopUpsAll.ToString("N0") кр.</div>
+            <div class="text-muted small">начислено админом</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-12">
+        <div class="adm-card">
+            <div class="adm-card-head d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Топ инструкторов по выручке</h5>
+                <span class="text-muted small">за всё время</span>
+            </div>
+            <div class="adm-card-body p-0">
+                @if (Model.TopInstructors.Count == 0)
+                {
+                    <p class="text-muted text-center py-4 mb-0">Транзакций по курсам пока нет</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Инструктор</th>
+                                    <th>Email</th>
+                                    <th class="text-center">Продаж</th>
+                                    <th class="text-end">Выручка</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{ int rank = 1; }
+                                @foreach (var r in Model.TopInstructors)
+                                {
+                                    <tr>
+                                        <td class="text-muted">@rank</td>
+                                        <td><a href="/instructors/@r.UserId" class="link-default fw-semibold">@r.Name</a></td>
+                                        <td class="text-muted small">@r.Email</td>
+                                        <td class="text-center">@r.Sales</td>
+                                        <td class="text-end fw-semibold">@r.Revenue.ToString("N0") кр.</td>
+                                    </tr>
+                                    rank++;
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="adm-card">
+    <div class="adm-card-head d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">История транзакций</h5>
+        <span class="text-muted small">последние @Model.RecentTransactions.Count</span>
+    </div>
+    <div class="adm-card-body p-0">
+        @if (Model.RecentTransactions.Count == 0)
+        {
+            <p class="text-muted text-center py-4 mb-0">Транзакций нет</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Дата</th>
+                            <th>Тип</th>
+                            <th>Пользователь</th>
+                            <th>Курс</th>
+                            <th class="text-end">Сумма</th>
+                            <th>Описание</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var t in Model.RecentTransactions)
+                        {
+                            <tr>
+                                <td class="text-muted small">@t.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                                <td><span class="badge @TypeColor(t.Type)">@TypeLabel(t.Type)</span></td>
+                                <td>@t.User?.FullName<br><span class="text-muted small">@t.User?.Email</span></td>
+                                <td>
+                                    @if (t.RelatedCourse is not null)
+                                    {
+                                        <a href="/courses/@t.RelatedCourse.Slug" class="link-default">@t.RelatedCourse.Title</a>
+                                    }
+                                    else { <span class="text-muted">—</span> }
+                                </td>
+                                <td class="text-end fw-semibold @(t.Amount >= 0 ? "text-success" : "text-danger")">
+                                    @(t.Amount >= 0 ? "+" : "")@t.Amount.ToString("N0")
+                                </td>
+                                <td class="text-muted small">@t.Description</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

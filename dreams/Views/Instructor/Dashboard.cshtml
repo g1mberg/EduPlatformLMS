@@ -1,0 +1,217 @@
+@model dreams.Models.Courses.InstructorDashboardViewModel
+@{
+    ViewData["Title"] = "Дашборд инструктора";
+    ViewData["DashboardArea"] = "instructor";
+    Layout = "_DashboardLayout";
+}
+
+@section Styles {
+    <style>
+        .kpi {
+            border: 1px solid #eef0f7; border-radius: 14px; padding: 18px;
+            background: #fff; display: flex; gap: 14px; align-items: center;
+        }
+        .kpi .ico {
+            width: 48px; height: 48px; border-radius: 12px;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 22px; color: #fff;
+        }
+        .kpi .num { font-size: 24px; font-weight: 700; line-height: 1; }
+        .kpi .lbl { color: #6b7280; font-size: 13px; margin-top: 4px; }
+        .ico.bg1 { background: #4d44e0; }
+        .ico.bg2 { background: #2ea043; }
+        .ico.bg3 { background: #f0a800; }
+        .ico.bg4 { background: #d33; }
+        .chart-bars { display: flex; align-items: flex-end; gap: 16px; height: 160px; padding: 14px 4px 0; }
+        .chart-bars .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .chart-bars .bar {
+            width: 100%; background: linear-gradient(180deg, #6b62ff, #4d44e0);
+            border-radius: 8px 8px 0 0; min-height: 4px;
+        }
+        .chart-bars .bar-lbl { color: #6b7280; font-size: 11px; }
+        .chart-bars .bar-num { color: #4d44e0; font-weight: 600; font-size: 12px; }
+        .section-card { background: #fff; border: 1px solid #eef0f7; border-radius: 14px; padding: 20px; }
+    </style>
+}
+
+<div class="breadcrumb-bar text-center">
+    <div class="container">
+        <h2 class="breadcrumb-title mb-2">Дашборд инструктора</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb justify-content-center mb-0">
+                <li class="breadcrumb-item"><a href="/">Главная</a></li>
+                <li class="breadcrumb-item active">Дашборд</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container">
+
+        @* KPI *@
+        <div class="row g-3 mb-4">
+            <div class="col-xl-3 col-md-6">
+                <div class="kpi">
+                    <div class="ico bg1"><i class="isax isax-book"></i></div>
+                    <div>
+                        <div class="num">@Model.CoursesCount</div>
+                        <div class="lbl">курсов всего (@Model.PublishedCount опубликовано)</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="kpi">
+                    <div class="ico bg2"><i class="isax isax-people"></i></div>
+                    <div>
+                        <div class="num">@Model.TotalStudents</div>
+                        <div class="lbl">студентов на курсах</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="kpi">
+                    <div class="ico bg3"><i class="fa-solid fa-star"></i></div>
+                    <div>
+                        <div class="num">@Model.AverageRating.ToString("0.0")</div>
+                        <div class="lbl">средний рейтинг</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="kpi">
+                    <div class="ico bg4"><i class="isax isax-wallet-3"></i></div>
+                    <div>
+                        <div class="num">@Model.TotalRevenue.ToString("N0") кр.</div>
+                        <div class="lbl">выручка (комиссия @Model.PlatformCommissionTotal.ToString("N0") кр.)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-lg-8">
+                <div class="section-card h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="mb-0">Записи за последние 6 месяцев</h5>
+                        <span class="text-muted small">enrollments</span>
+                    </div>
+                    @{
+                        var maxCnt = Model.MonthlyEnrollments.Max(m => (int?)m.Count) ?? 0;
+                    }
+                    <div class="chart-bars">
+                        @foreach (var p in Model.MonthlyEnrollments)
+                        {
+                            var pct = maxCnt == 0 ? 0 : (int)Math.Round(p.Count * 100.0 / maxCnt);
+                            <div class="bar-col">
+                                <div class="bar-num">@p.Count</div>
+                                <div class="bar" style="height:@(pct)%"></div>
+                                <div class="bar-lbl">@p.Label</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="section-card h-100">
+                    <h5 class="mb-3">Подписка</h5>
+                    @if (Model.ActivePlan.HasValue)
+                    {
+                        <p class="mb-2">План: <span class="badge text-bg-success">@Model.ActivePlan</span></p>
+                        @if (Model.PlanExpires.HasValue)
+                        {
+                            <p class="text-muted small mb-3">До: @Model.PlanExpires.Value.ToLocalTime().ToString("dd.MM.yyyy")</p>
+                        }
+                    }
+                    else
+                    {
+                        <p class="mb-2">План: <span class="badge text-bg-secondary">Free</span></p>
+                    }
+                    <p class="mb-3">Баланс: <b>@Model.Credits.ToString("N0")</b> кр.</p>
+                    <a href="/instructor/subscription" class="btn btn-outline-primary w-100">Сменить план</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-6">
+                <div class="section-card h-100">
+                    <h5 class="mb-3">Топ курсов</h5>
+                    @if (Model.TopCourses.Count == 0)
+                    {
+                        <p class="text-muted">Курсов пока нет.</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Курс</th>
+                                        <th class="text-center">Студенты</th>
+                                        <th class="text-center">Рейтинг</th>
+                                        <th class="text-end">Выручка</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var r in Model.TopCourses)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <a href="/courses/@r.Slug" class="link-default fw-semibold">@r.Title</a>
+                                                @if (!r.IsPublished)
+                                                {
+                                                    <span class="badge text-bg-secondary ms-1">draft</span>
+                                                }
+                                            </td>
+                                            <td class="text-center">@r.Students</td>
+                                            <td class="text-center">@r.AverageRating.ToString("0.0")</td>
+                                            <td class="text-end">@r.Revenue.ToString("N0")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="section-card h-100">
+                    <h5 class="mb-3">Последние записи студентов</h5>
+                    @if (Model.RecentEnrollments.Count == 0)
+                    {
+                        <p class="text-muted">На ваши курсы пока никто не записался.</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Студент</th>
+                                        <th>Курс</th>
+                                        <th class="text-center">Прогресс</th>
+                                        <th class="text-end">Когда</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var e in Model.RecentEnrollments)
+                                    {
+                                        <tr>
+                                            <td class="fw-semibold">@e.StudentName</td>
+                                            <td><a href="/courses/@e.CourseSlug" class="link-default">@e.CourseTitle</a></td>
+                                            <td class="text-center">@e.ProgressPercent.ToString("0.#")%</td>
+                                            <td class="text-end text-muted">@e.At.ToLocalTime().ToString("dd.MM HH:mm")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>

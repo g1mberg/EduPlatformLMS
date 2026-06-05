@@ -1,0 +1,85 @@
+@model IReadOnlyList<EduPlatform.Domain.Entities.Notification>
+@{
+    ViewData["Title"] = "Уведомления";
+    ViewData["DashboardArea"] = "student";
+    Layout = "_DashboardLayout";
+    var unreadCount = Model.Count(n => !n.IsRead);
+}
+
+<div class="breadcrumb-bar text-center">
+    <div class="container">
+        <h2 class="breadcrumb-title mb-2">Уведомления</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb justify-content-center mb-0">
+                <li class="breadcrumb-item"><a href="/">Главная</a></li>
+                <li class="breadcrumb-item active">Уведомления</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container" style="max-width: 800px;">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h4 class="mb-1">Лента уведомлений</h4>
+                <p class="text-muted mb-0">@Model.Count всего @(unreadCount > 0 ? $"· {unreadCount} непрочитанных" : "")</p>
+            </div>
+            @if (unreadCount > 0)
+            {
+                <form method="post" action="/student/notifications/read-all" class="m-0">
+                    @Html.AntiForgeryToken()
+                    <button class="btn btn-outline-primary"><i class="isax isax-tick-circle me-1"></i>Прочитать все</button>
+                </form>
+            }
+        </div>
+
+        @if (Model.Count == 0)
+        {
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="isax isax-notification fs-1 text-muted mb-3 d-block"></i>
+                    <h5>Пока тихо</h5>
+                    <p class="text-muted mb-0">Здесь появятся уведомления о событиях на платформе.</p>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="card border-0 shadow-sm">
+                <ul class="list-group list-group-flush">
+                    @foreach (var n in Model)
+                    {
+                        <li class="list-group-item d-flex gap-3 align-items-start @(n.IsRead ? "" : "bg-primary bg-opacity-10")">
+                            <div class="flex-shrink-0 pt-1">
+                                <i class="isax @(n.IsRead ? "isax-notification text-muted" : "isax-notification-bing text-primary") fs-4"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between">
+                                    <div class="fw-semibold">@n.Title @(n.IsRead ? "" : Html.Raw("<span class='badge text-bg-primary ms-1'>новое</span>"))</div>
+                                    <small class="text-muted">@n.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</small>
+                                </div>
+                                <div class="text-muted small">@n.Message</div>
+                            </div>
+                            <div class="flex-shrink-0">
+                                @if (!n.IsRead)
+                                {
+                                    <form method="post" action="/student/notifications/@n.Id/read" class="m-0 d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button class="btn btn-sm btn-outline-secondary" title="Прочитано"><i class="isax isax-tick-square"></i></button>
+                                    </form>
+                                }
+                                <form method="post" action="/student/notifications/@n.Id/delete" class="m-0 d-inline"
+                                      onsubmit="return confirm('Удалить уведомление?');">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-sm btn-outline-danger" title="Удалить"><i class="isax isax-trash"></i></button>
+                                </form>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+</section>

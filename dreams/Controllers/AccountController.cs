@@ -1,8 +1,14 @@
 using System.Text;
 using System.Text.Encodings.Web;
 using dreams.Models.Account;
-using dreams.Models.Entities;
-using dreams.Services;
+using EduPlatform.Domain.Entities;
+using EduPlatform.Application.Abstractions;
+using EduPlatform.Application.Services;
+using EduPlatform.Infrastructure.Audit;
+using EduPlatform.Infrastructure.Chat;
+using EduPlatform.Infrastructure.Email;
+using EduPlatform.Infrastructure.Logging;
+using EduPlatform.Infrastructure.Mongo;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -307,4 +313,97 @@ public class AccountController : Controller
 
     private static string FormatKey(string key) =>
         string.Join(' ', Enumerable.Range(0, (key.Length + 3) / 4).Select(i => key.Substring(i * 4, Math.Min(4, key.Length - i * 4))));
+
+    // ---------- PROFILE ----------
+
+    [HttpGet("profile")]
+    [Authorize]
+    public async Task<IActionResult> Profile()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user is null) return Challenge();
+        var roles = await _userManager.GetRolesAsync(user);
+        ViewData["Roles"] = roles;
+        ViewData["Is2FA"] = await _userManager.GetTwoFactorEnabledAsync(user);
+        return View(new ProfileViewModel
+        {
+            Email = user.Email ?? "",
+            FullName = user.FullName,
+            Bio = user.Bio,
+            AvatarUrl = user.AvatarUrl,
+            CreatedAt = user.CreatedAt,
+            Credits = user.Credits
+        });
+    }
+
+    [HttpPost("profile")]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Profile(ProfileViewModel vm)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user is null) return Challenge();
+
+        user.FullName = string.IsNullOrWhiteSpace(vm.FullName) ? user.FullName : vm.FullName.Trim();
+        user.Bio = string.IsNullOrWhiteSpace(vm.Bio) ? null : vm.Bio.Trim();
+        if (!string.IsNullOrWhiteSpace(vm.AvatarUrl)) user.AvatarUrl = vm.AvatarUrl.Trim();
+
+        var res = await _userManager.UpdateAsync(user);
+        if (!res.Succeeded)
+        {
+            foreach (var e in res.Errors) ModelState.AddModelError(string.Empty, e.Description);
+            var roles = await _userManager.GetRolesAsync(user);
+            ViewData["Roles"] = roles;
+            ViewData["Is2FA"] = await _userManager.GetTwoFactorEnabledAsync(user);
+            vm.Email = user.Email ?? "";
+            vm.CreatedAt = user.CreatedAt;
+            vm.Credits = user.Credits;
+            return View(vm);
+        }
+
+        TempData["Toast"] = "Профиль обновлён.";
+        return RedirectToAction(nameof(Profile));
+    }
+
+    [HttpPost("password-change")]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangePassword(string currentPassword, string newPassword, string confirmPassword)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user is null) return Challenge();
+
+        if (string.IsNullOrEmpty(newPassword) || newPassword.Length < 8)
+        {
+            TempData["Toast"] = "Новый пароль должен быть не короче 8 символов.";
+            return RedirectToAction(nameof(Profile));
+        }
+        if (newPassword != confirmPassword)
+        {
+            TempData["Toast"] = "Пароли не совпадают.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        var res = await _userManager.ChangePasswordAsync(user, currentPassword ?? "", newPassword);
+        if (!res.Succeeded)
+        {
+            TempData["Toast"] = "Не удалось сменить пароль: " + string.Join("; ", res.Errors.Select(e => e.Description));
+            return RedirectToAction(nameof(Profile));
+        }
+
+        await _signInManager.RefreshSignInAsync(user);
+        await _audit.LogAsync("account.password.change", "User", user.Id.ToString());
+        TempData["Toast"] = "Пароль изменён.";
+        return RedirectToAction(nameof(Profile));
+    }
+}
+
+public class ProfileViewModel
+{
+    public string Email { get; set; } = "";
+    public string? FullName { get; set; }
+    public string? Bio { get; set; }
+    public string? AvatarUrl { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public decimal Credits { get; set; }
 }

@@ -1,5 +1,5 @@
 @model dreams.Models.Courses.TestFormViewModel
-@using dreams.Models.Entities
+@using EduPlatform.Domain.Entities
 @{
     ViewData["Title"] = Model.TestId.HasValue ? "Редактирование теста" : "Новый тест";
     ViewData["DashboardArea"] = "instructor";
@@ -61,9 +61,10 @@
                         <div class="q-head">
                             <span class="badge-num q-num">@(i + 1)</span>
                             <input name="Questions[@i].Text" value="@q.Text" class="form-control" placeholder="Текст вопроса" />
-                            <select name="Questions[@i].Type" class="form-select" style="max-width: 220px;">
+                            <select name="Questions[@i].Type" class="form-select q-type" style="max-width: 220px;">
                                 <option value="@((int)QuestionType.SingleChoice)" selected="@(q.Type == QuestionType.SingleChoice)">Один вариант</option>
                                 <option value="@((int)QuestionType.MultipleChoice)" selected="@(q.Type == QuestionType.MultipleChoice)">Несколько вариантов</option>
+                                <option value="@((int)QuestionType.Text)" selected="@(q.Type == QuestionType.Text)">Текстовый ответ</option>
                             </select>
                             <button type="button" class="btn btn-outline-danger btn-sm btn-del-q" title="Удалить вопрос">
                                 <i class="isax isax-trash"></i>
@@ -199,16 +200,50 @@
             // SingleChoice — клик по чекбоксу снимает остальные в том же вопросе
             qBox.addEventListener('change', function (e) {
                 const cb = e.target;
-                if (cb.type !== 'checkbox' || !cb.checked) return;
-                if (!/IsCorrect$/.test(cb.name)) return;
-                const card = cb.closest('.q-card');
-                const sel = card.querySelector('select[name$=".Type"]');
-                if (sel && sel.value === '0') {
-                    card.querySelectorAll('input[type=checkbox][name$=".IsCorrect"]').forEach(other => {
-                        if (other !== cb) other.checked = false;
-                    });
+                if (cb.type === 'checkbox' && cb.checked && /IsCorrect$/.test(cb.name)) {
+                    const card = cb.closest('.q-card');
+                    const sel = card.querySelector('select[name$=".Type"]');
+                    if (sel && sel.value === '0') {
+                        card.querySelectorAll('input[type=checkbox][name$=".IsCorrect"]').forEach(other => {
+                            if (other !== cb) other.checked = false;
+                        });
+                    }
+                }
+                // Смена типа вопроса — перерисовать «карточку вариантов»
+                if (e.target.classList && e.target.classList.contains('q-type')) {
+                    applyTypeUi(e.target.closest('.q-card'));
                 }
             });
+
+            // Для type=Text: оставить один input с эталонным ответом, скрыть чекбоксы и кнопку «Вариант»
+            function applyTypeUi(card) {
+                const sel = card.querySelector('select[name$=".Type"]');
+                if (!sel) return;
+                const opts = card.querySelector('.options');
+                const addBtn = card.querySelector('.btn-add-o');
+                const isText = sel.value === '2';
+                if (isText) {
+                    addBtn.style.display = 'none';
+                    // оставить только первую opt-row и спрятать чекбокс
+                    const rows = opts.querySelectorAll('.opt-row');
+                    rows.forEach((r, i) => {
+                        if (i === 0) {
+                            const cb = r.querySelector('input[type=checkbox][name$=".IsCorrect"]');
+                            if (cb) cb.checked = true;
+                            const formCheck = r.querySelector('.form-check'); if (formCheck) formCheck.style.display = 'none';
+                            const delBtn = r.querySelector('.btn-del-o'); if (delBtn) delBtn.style.display = 'none';
+                            const txt = r.querySelector('input[name$=".Text"]');
+                            if (txt) txt.placeholder = 'Правильный ответ (текст)';
+                        } else r.remove();
+                    });
+                } else {
+                    addBtn.style.display = '';
+                    opts.querySelectorAll('.form-check').forEach(el => el.style.display = '');
+                    opts.querySelectorAll('.btn-del-o').forEach(el => el.style.display = '');
+                    opts.querySelectorAll('input[name$=".Text"]').forEach(el => { if (el.placeholder.includes('Правильный')) el.placeholder = 'Вариант ответа'; });
+                }
+            }
+            qBox.querySelectorAll('.q-card').forEach(applyTypeUi);
         })();
     </script>
 }

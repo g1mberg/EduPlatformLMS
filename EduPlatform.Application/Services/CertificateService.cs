@@ -1,0 +1,79 @@
+using EduPlatform.Application.Abstractions;
+using EduPlatform.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+
+namespace EduPlatform.Application.Services;
+
+public class CertificateService
+{
+    private readonly IApplicationDbContext _db;
+    private readonly NotificationService _notifications;
+
+    public CertificateService(IApplicationDbContext db, NotificationService notifications)
+    {
+        _db = db;
+        _notifications = notifications;
+    }
+
+    /// <summary>
+    /// Если все уроки курса пройдены и все привязанные тесты сданы — выдаёт
+    /// сертификат (если ещё не выдан). Возвращает выданный/существующий сертификат
+    /// или null, если условия не выполнены.
+    /// </summary>
+    public async Task<Certificate?> IssueIfEligibleAsync(Guid studentId, Guid courseId)
+    {
+        var existing = await _db.Certificates
+            .FirstOrDefaultAsync(c => c.StudentId == studentId && c.CourseId == courseId);
+        if (existing is not null) return existing;
+
+        var course = await _db.Courses
+            .Include(c => c.Sections).ThenInclude(s => s.Lessons).ThenInclude(l => l.Test)
+            .FirstOrDefaultAsync(c => c.Id == courseId);
+        if (course is null) return null;
+
+        var enrollment = await _db.Enrollments
+            .FirstOrDefaultAsync(e => e.CourseId == courseId && e.StudentId == studentId);
+        if (enrollment is null) return null;
+
+        var allLessons = course.Sections.SelectMany(s => s.Lessons).ToList();
+        if (allLessons.Count == 0) return null;
+
+        var completedLessonIds = await _db.LessonProgress
+            .Where(p => p.EnrollmentId == enrollment.Id && p.IsCompleted)
+            .Select(p => p.LessonId)
+            .ToListAsync();
+
+        if (completedLessonIds.Count < allLessons.Count) return null; // не все уроки пройдены
+
+        // Проверяем все тесты курса — должен быть хотя бы один passed attempt
+        var testIds = allLessons.Where(l => l.Test != null).Select(l => l.Test!.Id).ToList();
+        if (testIds.Count > 0)
+        {
+            var passedTestIds = await _db.TestAttempts
+                .Where(a => a.StudentId == studentId && a.IsPassed && testIds.Contains(a.TestId))
+                .Select(a => a.TestId)
+                .Distinct()
+                .ToListAsync();
+            if (passedTestIds.Count < testIds.Count) return null;
+        }
+
+        var cert = new Certificate
+        {
+            Id = Guid.NewGuid(),
+            StudentId = studentId,
+            CourseId = courseId,
+            CertificateNumber = GenerateNumber(),
+            IssuedAt = DateTime.UtcNow
+        };
+        _db.Certificates.Add(cert);
+        await _db.SaveChangesAsync();
+
+        await _notifications.NotifyAsync(studentId,
+            "Поздравляем! Выдан сертификат",
+            $"Курс «{course.Title}» успешно пройден. Номер сертификата: {cert.CertificateNumber}.");
+        return cert;
+    }
+
+    private static string GenerateNumber() =>
+        $"CERT-{DateTime.UtcNow:yyyy}-{Guid.NewGuid().ToString("N")[..8].ToUpperInvariant()}";
+}

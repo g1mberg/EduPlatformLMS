@@ -1,0 +1,110 @@
+@{
+    ViewData["Title"] = "О платформе";
+    Layout = "_InnerLayout";
+}
+
+@section Styles {
+    <style>
+        .about-hero {
+            background: linear-gradient(135deg, #4d44e0 0%, #6b62ff 100%);
+            color: #fff; padding: 60px 0; border-radius: 0 0 24px 24px;
+        }
+        .feature-card {
+            background: #fff; border: 1px solid #eef0f7; border-radius: 14px;
+            padding: 24px; height: 100%;
+        }
+        .feature-ico {
+            width: 52px; height: 52px; border-radius: 12px;
+            background: rgba(77,68,224,.1); color: #4d44e0;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 24px; margin-bottom: 14px;
+        }
+        .stat-num { font-size: 36px; font-weight: 800; color: #4d44e0; }
+        .stat-lbl { color: #6b7280; }
+    </style>
+}
+
+<div class="about-hero text-center">
+    <div class="container">
+        <h1 class="text-white mb-3">О EduPlatform LMS</h1>
+        <p class="lead text-white-50 mb-0" style="max-width: 720px; margin: 0 auto;">
+            Учебная веб-платформа для размещения и прохождения онлайн-курсов.
+            Студенты учатся, инструкторы преподают, админы следят за порядком.
+        </p>
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container">
+
+        <div class="row g-4 mb-5 text-center">
+            <div class="col-md-3">
+                <div class="stat-num">3</div>
+                <div class="stat-lbl">роли: Student / Instructor / Admin</div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-num">30 дн</div>
+                <div class="stat-lbl">срок подписки инструктора</div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-num">2</div>
+                <div class="stat-lbl">языка интерфейса (RU / EN)</div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-num">70%</div>
+                <div class="stat-lbl">проходной балл сертификата</div>
+            </div>
+        </div>
+
+        <h3 class="text-center mb-4">Что умеет платформа</h3>
+
+        <div class="row g-3">
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-ico"><i class="isax isax-book"></i></div>
+                    <h5>Каталог курсов</h5>
+                    <p class="text-muted mb-0">Фильтры по категории и цене, поиск, сортировка, пагинация. Все курсы из БД.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-ico"><i class="isax isax-teacher"></i></div>
+                    <h5>Кабинет инструктора</h5>
+                    <p class="text-muted mb-0">Мастер создания курса в 5 шагов, разделы, уроки, тесты с авто-проверкой, аналитика.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-ico"><i class="isax isax-medal"></i></div>
+                    <h5>Сертификаты</h5>
+                    <p class="text-muted mb-0">Автоматическая выдача сертификата при 100% прогрессе и сданных тестах.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-ico"><i class="isax isax-crown"></i></div>
+                    <h5>Подписки за кредиты</h5>
+                    <p class="text-muted mb-0">Три плана: Free (3 курса), Basic (10 курсов), Pro (без ограничений). Оплата виртуальными кредитами.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-ico"><i class="isax isax-message"></i></div>
+                    <h5>Чат курса</h5>
+                    <p class="text-muted mb-0">Групповой чат в реальном времени через SignalR. История сообщений в MongoDB.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-ico"><i class="isax isax-shield-tick"></i></div>
+                    <h5>Безопасность</h5>
+                    <p class="text-muted mb-0">Email-подтверждение, двухфакторная аутентификация (TOTP), CSRF-защита на формах.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-5">
+            <a href="/courses" class="btn btn-primary btn-lg">Перейти к каталогу</a>
+        </div>
+    </div>
+</section>

@@ -1,4 +1,4 @@
-using dreams.Data;
+using EduPlatform.Infrastructure.Persistence;
 using dreams.Models.Courses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

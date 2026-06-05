@@ -17,4 +17,10 @@
         <PackageReference Include="MongoDB.Driver" Version="3.9.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\EduPlatform.Domain\EduPlatform.Domain.csproj" />
+      <ProjectReference Include="..\EduPlatform.Application\EduPlatform.Application.csproj" />
+      <ProjectReference Include="..\EduPlatform.Infrastructure\EduPlatform.Infrastructure.csproj" />
+    </ItemGroup>
+
 </Project>

@@ -93,10 +93,20 @@
                         </ul>
                     </div>
                     <div class="header-btn d-flex align-items-center">
-                        <div class="icon-btn">
-                            <a href="/student/notifications" aria-label="notifications">
-                                <i class="isax isax-notification5"></i>
+                        <div class="dropdown me-2" id="notifBox">
+                            <a href="/student/notifications" class="position-relative d-inline-block p-2" data-bs-toggle="dropdown" aria-expanded="false" aria-label="notifications">
+                                <i class="isax isax-notification5 fs-5"></i>
+                                <span id="notifBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none; font-size: 10px;">0</span>
                             </a>
+                            <div class="dropdown-menu dropdown-menu-end p-0 mt-2" style="width: 340px; max-height: 420px; overflow-y: auto;">
+                                <div class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
+                                    <b>Уведомления</b>
+                                    <a href="/student/notifications" class="link-secondary small">Все</a>
+                                </div>
+                                <div id="notifList" class="p-2 text-center text-muted small">
+                                    Загрузка…
+                                </div>
+                            </div>
                         </div>
                         <div class="icon-btn">
                             <a href="/cart" class="position-relative" aria-label="cart">
@@ -121,9 +131,10 @@
                                 </span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end p-2 mt-2">
-                                <li><a class="dropdown-item rounded" href="/student/profile"><i class="isax isax-user me-2"></i>@L["Nav.MyProfile"]</a></li>
+                                <li><a class="dropdown-item rounded" href="/account/profile"><i class="isax isax-user me-2"></i>@L["Nav.MyProfile"]</a></li>
                                 <li><a class="dropdown-item rounded" href="/student/courses"><i class="isax isax-book me-2"></i>@L["Nav.MyCoursesStudent"]</a></li>
                                 <li><a class="dropdown-item rounded" href="/instructor/courses"><i class="isax isax-teacher me-2"></i>@L["Nav.MyCoursesInstructor"]</a></li>
+                                <li><a class="dropdown-item rounded" href="/instructor/dashboard"><i class="isax isax-chart-21 me-2"></i>Дашборд инструктора</a></li>
                                 <li><a class="dropdown-item rounded" href="/instructor/subscription"><i class="isax isax-crown me-2"></i>@L["Nav.Subscription"]</a></li>
                                 <li><a class="dropdown-item rounded" href="/account/security"><i class="isax isax-shield-tick me-2"></i>@L["Nav.Security"]</a></li>
                                 <li><hr class="dropdown-divider"></li>
@@ -169,6 +180,68 @@
     <script src="~/assets/plugins/fancybox/jquery.fancybox.min.js"></script>
     <script src="~/assets/js/script.js"></script>
 
+    @if (User?.Identity?.IsAuthenticated == true)
+    {
+        <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@8.0.7/dist/browser/signalr.min.js"></script>
+        <script>
+            (function () {
+                const badge = document.getElementById('notifBadge');
+                const list = document.getElementById('notifList');
+                if (!badge || !list) return;
+
+                function escapeHtml(s) {
+                    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+                }
+                function fmtTime(iso) {
+                    const d = new Date(iso);
+                    return d.toLocaleString([], { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit' });
+                }
+                function render(count, items) {
+                    if (count > 0) { badge.textContent = count > 99 ? '99+' : count; badge.style.display = ''; }
+                    else badge.style.display = 'none';
+
+                    if (!items || items.length === 0) {
+                        list.innerHTML = '<div class="p-3 text-center text-muted small">Нет уведомлений</div>';
+                        return;
+                    }
+                    list.innerHTML = items.map(n =>
+                        '<div class="px-3 py-2 border-bottom ' + (n.isRead ? '' : 'bg-primary bg-opacity-10') + '">' +
+                        '<div class="fw-semibold small">' + escapeHtml(n.title) + '</div>' +
+                        '<div class="text-muted small" style="font-size: 12px;">' + escapeHtml(n.message || '') + '</div>' +
+                        '<div class="text-muted" style="font-size: 11px;">' + fmtTime(n.createdAt || n.at) + '</div>' +
+                        '</div>'
+                    ).join('');
+                }
+                async function refresh() {
+                    try {
+                        const r = await fetch('/student/notifications/unread-count');
+                        if (!r.ok) return;
+                        const d = await r.json();
+                        render(d.count, d.latest);
+                    } catch {}
+                }
+                refresh();
+
+                try {
+                    const conn = new signalR.HubConnectionBuilder()
+                        .withUrl('/hubs/notifications')
+                        .withAutomaticReconnect()
+                        .build();
+                    conn.on('Notify', n => {
+                        refresh();
+                        // toast-плашка в правом нижнем углу
+                        const toast = document.createElement('div');
+                        toast.style.cssText = 'position:fixed; bottom:20px; right:20px; z-index:9999; max-width:340px; background:#fff; border:1px solid #4d44e0; border-radius:12px; padding:12px 14px; box-shadow:0 6px 20px rgba(0,0,0,.12); animation: slideIn .25s ease-out;';
+                        toast.innerHTML = '<div class="fw-semibold small">' + escapeHtml(n.title) + '</div>' +
+                                          '<div class="text-muted small mt-1">' + escapeHtml(n.message || '') + '</div>';
+                        document.body.appendChild(toast);
+                        setTimeout(() => toast.remove(), 6000);
+                    });
+                    conn.start().catch(()=>{});
+                } catch {}
+            })();
+        </script>
+    }
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 

@@ -119,6 +119,129 @@
                         }
                     </div>
                 </div>
+
+                @* ---------- ОТЗЫВЫ ---------- *@
+                <div class="card mb-4" id="reviews">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">Отзывы</h5>
+                            <div class="text-muted small">@Model.ReviewsCount отзыв(ов) · средняя @c.AverageRating.ToString("0.0")★</div>
+                        </div>
+
+                        @if (Model.ReviewsCount > 0)
+                        {
+                            <div class="row align-items-center mb-3">
+                                <div class="col-md-4 text-center">
+                                    <div class="display-5 fw-bold text-secondary">@c.AverageRating.ToString("0.0")</div>
+                                    <div class="text-warning fs-5">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            var filled = i <= Math.Round(c.AverageRating);
+                                            <i class="fa-solid fa-star @(filled ? "text-warning" : "text-muted opacity-25")"></i>
+                                        }
+                                    </div>
+                                    <div class="text-muted small mt-1">@Model.ReviewsCount оценок</div>
+                                </div>
+                                <div class="col-md-8">
+                                    @for (int stars = 5; stars >= 1; stars--)
+                                    {
+                                        var cnt = Model.RatingHistogram[5 - stars];
+                                        var pct = Model.ReviewsCount == 0 ? 0 : (int)Math.Round(cnt * 100.0 / Model.ReviewsCount);
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <span class="text-muted small" style="width: 30px;">@stars★</span>
+                                            <div class="progress flex-grow-1" style="height: 8px;">
+                                                <div class="progress-bar bg-warning" style="width:@(pct)%"></div>
+                                            </div>
+                                            <span class="text-muted small" style="width: 30px;">@cnt</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        @if (Model.CanLeaveReview)
+                        {
+                            <div class="border-top pt-3">
+                                <h6 class="mb-2">Оставить отзыв</h6>
+                                <form method="post" action="/courses/@c.Slug/review">
+                                    @Html.AntiForgeryToken()
+                                    <div class="mb-2 d-flex gap-1 fs-4 review-stars" id="ratingPick">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            <button type="button" class="btn p-0 border-0 star-btn" data-rate="@i" aria-label="@i star">
+                                                <i class="fa-regular fa-star text-warning"></i>
+                                            </button>
+                                        }
+                                    </div>
+                                    <input type="hidden" name="rating" id="ratingInput" value="" required />
+                                    <textarea name="text" class="form-control mb-2" rows="3" maxlength="2000" placeholder="Расскажите, как вам курс (необязательно)"></textarea>
+                                    <button type="submit" class="btn btn-primary" id="reviewSubmit" disabled>Отправить отзыв</button>
+                                </form>
+                            </div>
+                        }
+                        else if (Model.MyReview is not null)
+                        {
+                            <div class="alert alert-info d-flex justify-content-between align-items-center">
+                                <div>
+                                    Ваш отзыв: <b>@Model.MyReview.Rating★</b>
+                                    @if (!Model.MyReview.IsApproved) { <span class="badge text-bg-warning ms-1">на модерации</span> }
+                                </div>
+                                <form method="post" action="/courses/@c.Slug/review/delete" class="m-0"
+                                      onsubmit="return confirm('Удалить ваш отзыв?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+                                </form>
+                            </div>
+                        }
+                        else if (!User.Identity!.IsAuthenticated)
+                        {
+                            <p class="text-muted small mb-0">Войдите и запишитесь на курс, чтобы оставить отзыв.</p>
+                        }
+                        else if (!Model.IsEnrolled && !Model.IsOwner)
+                        {
+                            <p class="text-muted small mb-0">Отзыв можно оставить, только если вы записаны на курс.</p>
+                        }
+
+                        @if (Model.Reviews.Count == 0)
+                        {
+                            <p class="text-muted text-center py-3 mb-0">Пока никто не оставил отзыв. Будьте первым!</p>
+                        }
+                        else
+                        {
+                            <div class="border-top pt-3 mt-3">
+                                @foreach (var r in Model.Reviews)
+                                {
+                                    <div class="d-flex gap-3 mb-3 pb-3 border-bottom">
+                                        <div class="avatar avatar-md flex-shrink-0">
+                                            <img class="rounded-circle"
+                                                 src="@(string.IsNullOrEmpty(r.Student.AvatarUrl) ? "/assets/img/user/user-29.jpg" : r.Student.AvatarUrl)"
+                                                 alt="">
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <span class="fw-semibold">@r.Student.FullName</span>
+                                                    @if (!r.IsApproved) { <span class="badge text-bg-warning ms-2">на модерации</span> }
+                                                </div>
+                                                <small class="text-muted">@r.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")</small>
+                                            </div>
+                                            <div class="text-warning small mb-1">
+                                                @for (int i = 1; i <= 5; i++)
+                                                {
+                                                    <i class="fa-solid fa-star @(i <= r.Rating ? "" : "text-muted opacity-25")"></i>
+                                                }
+                                            </div>
+                                            @if (!string.IsNullOrWhiteSpace(r.Text))
+                                            {
+                                                <p class="mb-0">@r.Text</p>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
             </div>
 
             <div class="col-lg-4">
@@ -171,3 +294,31 @@
         </div>
     </div>
 </section>
+
+@section Scripts {
+    <script>
+        (function () {
+            const pick = document.getElementById('ratingPick');
+            if (!pick) return;
+            const input = document.getElementById('ratingInput');
+            const submit = document.getElementById('reviewSubmit');
+            const stars = pick.querySelectorAll('.star-btn');
+            function paint(n) {
+                stars.forEach((b, i) => {
+                    const ic = b.querySelector('i');
+                    if (i < n) { ic.classList.remove('fa-regular'); ic.classList.add('fa-solid'); }
+                    else { ic.classList.remove('fa-solid'); ic.classList.add('fa-regular'); }
+                });
+            }
+            stars.forEach(b => {
+                b.addEventListener('mouseenter', () => paint(+b.dataset.rate));
+                b.addEventListener('click', () => {
+                    input.value = b.dataset.rate;
+                    submit.disabled = false;
+                    paint(+b.dataset.rate);
+                });
+            });
+            pick.addEventListener('mouseleave', () => paint(+(input.value || 0)));
+        })();
+    </script>
+}

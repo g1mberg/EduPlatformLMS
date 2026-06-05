@@ -89,6 +89,9 @@
                                 <td class="text-center">@(r.PassingScore.HasValue ? $"{r.PassingScore}%" : "—")</td>
                                 <td class="text-end">
                                     <div class="d-inline-flex gap-2">
+                                        <a href="/instructor/lessons/@r.LessonId/attachments" class="btn btn-sm btn-outline-secondary" title="Файлы урока">
+                                            <i class="isax isax-document"></i>
+                                        </a>
                                         @if (r.TestId.HasValue)
                                         {
                                             <a href="/instructor/lessons/@r.LessonId/test/edit"

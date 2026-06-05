@@ -1,7 +1,13 @@
 using System.ComponentModel.DataAnnotations;
-using dreams.Data;
-using dreams.Models.Entities;
-using dreams.Services;
+using EduPlatform.Infrastructure.Persistence;
+using EduPlatform.Domain.Entities;
+using EduPlatform.Application.Abstractions;
+using EduPlatform.Application.Services;
+using EduPlatform.Infrastructure.Audit;
+using EduPlatform.Infrastructure.Chat;
+using EduPlatform.Infrastructure.Email;
+using EduPlatform.Infrastructure.Logging;
+using EduPlatform.Infrastructure.Mongo;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -282,6 +288,129 @@ public class AdminController : Controller
         return View(vm);
     }
 
+    // ---------- FINANCE ----------
+
+    [HttpGet("finance")]
+    public async Task<IActionResult> Finance(int? days = 30)
+    {
+        var window = days ?? 30;
+        var since = DateTime.UtcNow.AddDays(-window);
+
+        var txs = await _db.Transactions
+            .Include(t => t.User)
+            .Include(t => t.RelatedCourse)
+            .OrderByDescending(t => t.CreatedAt)
+            .Take(500)
+            .ToListAsync();
+
+        // Доход платформы — модуль PlatformCommission
+        var commissionAll = await _db.Transactions
+            .Where(t => t.Type == TransactionType.PlatformCommission)
+            .SumAsync(t => (decimal?)Math.Abs(t.Amount)) ?? 0;
+        var commissionWindow = await _db.Transactions
+            .Where(t => t.Type == TransactionType.PlatformCommission && t.CreatedAt >= since)
+            .SumAsync(t => (decimal?)Math.Abs(t.Amount)) ?? 0;
+        var subPaymentsAll = await _db.Transactions
+            .Where(t => t.Type == TransactionType.SubscriptionPayment)
+            .SumAsync(t => (decimal?)Math.Abs(t.Amount)) ?? 0;
+        var coursePurchasesAll = await _db.Transactions
+            .Where(t => t.Type == TransactionType.CoursePurchase)
+            .SumAsync(t => (decimal?)Math.Abs(t.Amount)) ?? 0;
+        var topUpsAll = await _db.Transactions
+            .Where(t => t.Type == TransactionType.TopUp)
+            .SumAsync(t => (decimal?)t.Amount) ?? 0;
+
+        // По инструкторам: суммарная выручка (CoursePurchase к ним приходит как +Amount на userId инструктора)
+        var perInstructor = await _db.Transactions
+            .Where(t => t.Type == TransactionType.CoursePurchase && t.Amount > 0)
+            .GroupBy(t => t.UserId)
+            .Select(g => new { UserId = g.Key, Total = g.Sum(t => t.Amount), Count = g.Count() })
+            .OrderByDescending(x => x.Total)
+            .Take(10)
+            .ToListAsync();
+
+        var userMap = await _db.Users
+            .Where(u => perInstructor.Select(x => x.UserId).Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u);
+
+        var instructorRows = perInstructor.Select(x => new FinanceInstructorRow
+        {
+            UserId = x.UserId,
+            Name = userMap.GetValueOrDefault(x.UserId)?.FullName ?? "—",
+            Email = userMap.GetValueOrDefault(x.UserId)?.Email ?? "",
+            Revenue = x.Total,
+            Sales = x.Count
+        }).ToList();
+
+        var vm = new FinanceVm
+        {
+            Days = window,
+            CommissionAll = commissionAll,
+            CommissionWindow = commissionWindow,
+            SubPaymentsAll = subPaymentsAll,
+            CoursePurchasesAll = coursePurchasesAll,
+            TopUpsAll = topUpsAll,
+            RecentTransactions = txs,
+            TopInstructors = instructorRows
+        };
+        return View(vm);
+    }
+
+    // ---------- REVIEWS (модерация) ----------
+
+    [HttpGet("reviews")]
+    public async Task<IActionResult> Reviews(string? filter = null)
+    {
+        var q = _db.Reviews
+            .Include(r => r.Student)
+            .Include(r => r.Course)
+            .AsQueryable();
+        if (filter == "pending") q = q.Where(r => !r.IsApproved);
+        if (filter == "approved") q = q.Where(r => r.IsApproved);
+
+        ViewData["Filter"] = filter;
+        var list = await q.OrderByDescending(r => r.CreatedAt).Take(200).ToListAsync();
+        return View(list);
+    }
+
+    [HttpPost("reviews/{id:guid}/toggle")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleReview(Guid id)
+    {
+        var r = await _db.Reviews.FindAsync(id);
+        if (r is null) return NotFound();
+        r.IsApproved = !r.IsApproved;
+        await _db.SaveChangesAsync();
+        await RecalcCourseAvgAsync(r.CourseId);
+        TempData["Toast"] = r.IsApproved ? "Отзыв одобрен." : "Отзыв снят с публикации.";
+        return RedirectToAction(nameof(Reviews));
+    }
+
+    [HttpPost("reviews/{id:guid}/delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteReview(Guid id)
+    {
+        var r = await _db.Reviews.FindAsync(id);
+        if (r is null) return NotFound();
+        var courseId = r.CourseId;
+        _db.Reviews.Remove(r);
+        await _db.SaveChangesAsync();
+        await RecalcCourseAvgAsync(courseId);
+        TempData["Toast"] = "Отзыв удалён.";
+        return RedirectToAction(nameof(Reviews));
+    }
+
+    private async Task RecalcCourseAvgAsync(Guid courseId)
+    {
+        var approved = await _db.Reviews
+            .Where(r => r.CourseId == courseId && r.IsApproved)
+            .Select(r => r.Rating).ToListAsync();
+        var course = await _db.Courses.FindAsync(courseId);
+        if (course is null) return;
+        course.AverageRating = approved.Count == 0 ? 0m : Math.Round((decimal)approved.Average(), 2);
+        await _db.SaveChangesAsync();
+    }
+
     [HttpPost("subscriptions/{id:guid}/cancel")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CancelSubscription(Guid id)
@@ -314,4 +443,25 @@ public class LogsVm
 {
     public List<HttpLogRecord> HttpLogs { get; init; } = new();
     public List<UserActionRecord> UserActions { get; init; } = new();
+}
+
+public class FinanceVm
+{
+    public int Days { get; init; }
+    public decimal CommissionAll { get; init; }
+    public decimal CommissionWindow { get; init; }
+    public decimal SubPaymentsAll { get; init; }
+    public decimal CoursePurchasesAll { get; init; }
+    public decimal TopUpsAll { get; init; }
+    public List<Transaction> RecentTransactions { get; init; } = new();
+    public List<FinanceInstructorRow> TopInstructors { get; init; } = new();
+}
+
+public class FinanceInstructorRow
+{
+    public Guid UserId { get; init; }
+    public string Name { get; init; } = "";
+    public string Email { get; init; } = "";
+    public decimal Revenue { get; init; }
+    public int Sales { get; init; }
 }

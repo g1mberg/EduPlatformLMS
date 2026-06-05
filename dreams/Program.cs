@@ -1,18 +1,26 @@
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
-using dreams.Data;
-using dreams.Models.Entities;
+using EduPlatform.Application.Abstractions;
+using EduPlatform.Application.Services;
+using EduPlatform.Domain.Entities;
+using EduPlatform.Infrastructure.Audit;
+using EduPlatform.Infrastructure.Chat;
+using EduPlatform.Infrastructure.Email;
+using EduPlatform.Infrastructure.Logging;
+using EduPlatform.Infrastructure.Mongo;
+using EduPlatform.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.WebEncoders;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// User-secrets подхватываем явно (иначе только в Development), чтобы SMTP-настройки работали и под Production
+// User-secrets явно (иначе только в Development), чтобы SMTP-настройки работали и под Production
 builder.Configuration.AddUserSecrets<Program>(optional: true);
 
 builder.Services.AddDbContext<ApplicationDbContext>(o =>
-    o.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+    o.UseSqlServer(builder.Configuration.GetConnectionString("Default"),
+        sql => sql.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
 
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
@@ -31,30 +39,35 @@ builder.Services.ConfigureApplicationCookie(o =>
     o.AccessDeniedPath = "/error/403";
 });
 
-builder.Services.AddScoped<dreams.Services.CertificateService>();
+// Application
+builder.Services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
+builder.Services.AddScoped<INotificationPusher, dreams.Infrastructure.SignalRNotificationPusher>();
+builder.Services.AddScoped<CertificateService>();
+builder.Services.AddScoped<NotificationService>();
 
-// Email: если есть Email:Smtp:Host — используем MailKit, иначе пишем .eml в App_Data/mail/
-builder.Services.AddSingleton<dreams.Services.FileEmailSender>();
+// Infrastructure: email
+builder.Services.AddSingleton<FileEmailSender>();
 if (!string.IsNullOrWhiteSpace(builder.Configuration["Email:Smtp:Host"]))
 {
-    builder.Services.AddSingleton<dreams.Services.IEmailSender, dreams.Services.SmtpEmailSender>();
+    builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
 }
 else
 {
-    builder.Services.AddSingleton<dreams.Services.IEmailSender>(sp =>
-        sp.GetRequiredService<dreams.Services.FileEmailSender>());
+    builder.Services.AddSingleton<IEmailSender>(sp => sp.GetRequiredService<FileEmailSender>());
 }
+
+// Infrastructure: misc
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddSingleton<dreams.Services.MongoLogService>();
-builder.Services.AddSingleton<dreams.Services.ChatMessageStore>();
-builder.Services.AddScoped<dreams.Services.UserActionLogger>();
+builder.Services.AddSingleton<MongoLogService>();
+builder.Services.AddSingleton<ChatMessageStore>();
+builder.Services.AddScoped<UserActionLogger>();
 builder.Services.AddSignalR();
 
-// Чтобы Razor не экранировал кириллицу в &#x... сущности
+// Чтобы Razor не экранировал кириллицу
 builder.Services.Configure<WebEncoderOptions>(o =>
     o.TextEncoderSettings = new TextEncoderSettings(UnicodeRanges.All));
 
-// Локализация: RU/EN, ресурсы в Resources/
+// Локализация
 builder.Services.AddLocalization(o => o.ResourcesPath = "Resources");
 builder.Services.Configure<Microsoft.AspNetCore.Builder.RequestLocalizationOptions>(o =>
 {
@@ -66,7 +79,6 @@ builder.Services.Configure<Microsoft.AspNetCore.Builder.RequestLocalizationOptio
     o.DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture("ru");
     o.SupportedCultures = supported;
     o.SupportedUICultures = supported;
-    // Порядок: ?culture=en → cookie → Accept-Language
 });
 
 builder.Services.AddControllersWithViews()
@@ -105,12 +117,13 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseMiddleware<dreams.Services.HttpLoggingMiddleware>();
+app.UseMiddleware<HttpLoggingMiddleware>();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.MapHub<dreams.Hubs.CourseChatHub>("/hubs/course-chat");
+app.MapHub<dreams.Hubs.NotificationsHub>("/hubs/notifications");
 
 app.Run();

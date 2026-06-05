@@ -1,0 +1,95 @@
+@model IReadOnlyList<EduPlatform.Domain.Entities.Review>
+@{
+    ViewData["Title"] = "Отзывы";
+    ViewData["PageTitle"] = "Модерация отзывов";
+    ViewData["AdminSection"] = "reviews";
+    Layout = "_AdminLayout";
+    var filter = ViewData["Filter"] as string;
+    var toast = TempData["Toast"] as string;
+}
+
+@if (!string.IsNullOrEmpty(toast))
+{
+    <div class="alert alert-info">@toast</div>
+}
+
+<div class="adm-card">
+    <div class="adm-card-head d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Отзывы (@Model.Count)</h5>
+        <div class="btn-group btn-group-sm">
+            <a href="/admin/reviews" class="btn btn-outline-secondary @(filter is null ? "active" : "")">Все</a>
+            <a href="/admin/reviews?filter=pending" class="btn btn-outline-secondary @(filter == "pending" ? "active" : "")">На модерации</a>
+            <a href="/admin/reviews?filter=approved" class="btn btn-outline-secondary @(filter == "approved" ? "active" : "")">Одобренные</a>
+        </div>
+    </div>
+    <div class="adm-card-body p-0">
+        @if (Model.Count == 0)
+        {
+            <p class="text-muted text-center py-4 mb-0">Нет отзывов</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Дата</th>
+                            <th>Студент</th>
+                            <th>Курс</th>
+                            <th>Оценка</th>
+                            <th>Текст</th>
+                            <th class="text-center">Статус</th>
+                            <th class="text-end">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model)
+                        {
+                            <tr>
+                                <td class="text-muted small">@r.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>@r.Student.FullName<br><span class="text-muted small">@r.Student.Email</span></td>
+                                <td><a href="/courses/@r.Course.Slug" class="link-default">@r.Course.Title</a></td>
+                                <td>
+                                    <span class="text-warning">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            <i class="fa-solid fa-star @(i <= r.Rating ? "" : "text-muted opacity-25")"></i>
+                                        }
+                                    </span>
+                                </td>
+                                <td style="max-width: 320px; white-space: pre-wrap;">@r.Text</td>
+                                <td class="text-center">
+                                    @if (r.IsApproved)
+                                    {
+                                        <span class="badge text-bg-success">опубликован</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge text-bg-warning">скрыт</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-inline-flex gap-1">
+                                        <form method="post" action="/admin/reviews/@r.Id/toggle" class="m-0">
+                                            @Html.AntiForgeryToken()
+                                            <button class="btn btn-sm btn-outline-primary" title="@(r.IsApproved ? "Скрыть" : "Одобрить")">
+                                                <i class="isax @(r.IsApproved ? "isax-eye-slash" : "isax-tick-circle")"></i>
+                                            </button>
+                                        </form>
+                                        <form method="post" action="/admin/reviews/@r.Id/delete" class="m-0"
+                                              onsubmit="return confirm('Удалить отзыв навсегда?');">
+                                            @Html.AntiForgeryToken()
+                                            <button class="btn btn-sm btn-outline-danger" title="Удалить">
+                                                <i class="isax isax-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
