@@ -181,4 +181,18 @@
   <data name="Chat.MongoOffWarning"><value>MongoDB is not connected — chat history is kept in process memory only and will be lost on restart.</value></data>
   <data name="Chat.BackToCourse"><value>Back to course</value></data>
   <data name="Chat.InstructorBadge"><value>instructor</value></data>
+
+  <data name="Admin.NavDashboard"><value>Dashboard</value></data>
+  <data name="Admin.NavUsers"><value>Users</value></data>
+  <data name="Admin.NavCourses"><value>Courses</value></data>
+  <data name="Admin.NavCategories"><value>Categories</value></data>
+  <data name="Admin.NavPlans"><value>Subscription plans</value></data>
+  <data name="Admin.NavSubscriptions"><value>Subscriptions</value></data>
+  <data name="Admin.NavReviews"><value>Reviews</value></data>
+  <data name="Admin.NavCertificates"><value>Certificates</value></data>
+  <data name="Admin.NavFinance"><value>Finance</value></data>
+  <data name="Admin.NavLogs"><value>Logs</value></data>
+  <data name="Admin.NavSiteLink"><value>Back to site</value></data>
+  <data name="Admin.NavManagement"><value>Management</value></data>
+  <data name="Admin.NavAccount"><value>Account</value></data>
 </root>

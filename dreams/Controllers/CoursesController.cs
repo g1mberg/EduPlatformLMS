@@ -83,6 +83,11 @@ public class CoursesController : Controller
             Search = search, CategorySlug = category, Price = price, Sort = sort,
             Page = page, PageSize = pageSize, TotalCount = total
         };
+
+        // AJAX-режим: отдаём только фрагмент с результатами
+        if (Request.Headers["X-Requested-With"] == "fetch" || Request.Query["ajax"] == "1")
+            return PartialView("_CatalogResults", vm);
+
         return View(vm);
     }
 

@@ -1,0 +1,93 @@
+@model dreams.Models.Courses.CourseCatalogViewModel
+@{
+    string PriceLabel(decimal p) => p == 0 ? L["Catalog.Free"].Value : $"{p:N0} кр.";
+    string PageLink(int p) => Url.Action("Index", "Courses", new {
+        search = Model.Search, category = Model.CategorySlug, price = Model.Price, sort = Model.Sort, page = p
+    })!;
+}
+<div class="catalog-results-counter mb-3">
+    <h6 class="fw-medium mb-0">
+        @if (Model.TotalCount == 0)
+        {
+            <text>@L["Catalog.NothingFound"]</text>
+        }
+        else
+        {
+            var from = (Model.Page - 1) * Model.PageSize + 1;
+            var to = Math.Min(Model.Page * Model.PageSize, Model.TotalCount);
+            @L["Catalog.ShowingOf", from, to, Model.TotalCount]
+        }
+    </h6>
+</div>
+
+@if (Model.Courses.Count == 0)
+{
+    <div class="alert alert-light text-center py-5">@L["Catalog.NothingFound"]</div>
+}
+else
+{
+    <div class="row">
+        @foreach (var c in Model.Courses)
+        {
+            <div class="col-xl-4 col-md-6">
+                <div class="course-item-two course-item mx-0">
+                    <div class="course-img">
+                        <a href="/courses/@c.Slug">
+                            <img src="@c.CoverUrl" alt="@c.Title" class="img-fluid">
+                        </a>
+                        @if (c.Price == 0)
+                        {
+                            <div class="position-absolute start-0 top-0 p-3 z-index-2">
+                                <div class="badge text-bg-success">@L["Catalog.Free"]</div>
+                            </div>
+                        }
+                    </div>
+                    <div class="course-content">
+                        <div class="d-flex justify-content-between mb-2">
+                            <div class="d-flex align-items-center">
+                                <span class="avatar avatar-sm">
+                                    <img src="@(string.IsNullOrEmpty(c.Instructor.AvatarUrl) ? "/assets/img/user/user-29.jpg" : c.Instructor.AvatarUrl)" alt="" class="img-fluid avatar avatar-sm rounded-circle">
+                                </span>
+                                <div class="ms-2">
+                                    <a href="/instructors/@c.InstructorId" class="link-default fs-14">@c.Instructor.FullName</a>
+                                </div>
+                            </div>
+                            <span class="badge badge-light rounded-pill bg-light fs-13 fw-medium mb-0">
+                                @c.Category.Name
+                            </span>
+                        </div>
+                        <h6 class="title mb-2"><a href="/courses/@c.Slug">@c.Title</a></h6>
+                        <p class="d-flex align-items-center mb-3">
+                            <i class="fa-solid fa-star text-warning me-2"></i>
+                            @c.AverageRating.ToString("0.0") (@c.StudentsCount @L["Catalog.Students"])
+                        </p>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <h5 class="text-secondary mb-0">@PriceLabel(c.Price)</h5>
+                            <a href="/courses/@c.Slug" class="btn btn-dark btn-sm d-inline-flex align-items-center">
+                                @L["Catalog.Details"] <i class="isax isax-arrow-right-3 ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (Model.TotalPages > 1)
+    {
+        <ul class="pagination lms-page justify-content-center mt-3">
+            <li class="page-item prev @(Model.Page <= 1 ? "disabled" : "")">
+                <a class="page-link" href="@(Model.Page > 1 ? PageLink(Model.Page - 1) : "#")" data-page="@(Model.Page - 1)"><i class="fas fa-angle-left"></i></a>
+            </li>
+            @for (var p = 1; p <= Model.TotalPages; p++)
+            {
+                <li class="page-item @(p == Model.Page ? "active" : "")">
+                    <a class="page-link" href="@PageLink(p)" data-page="@p">@p</a>
+                </li>
+            }
+            <li class="page-item next @(Model.Page >= Model.TotalPages ? "disabled" : "")">
+                <a class="page-link" href="@(Model.Page < Model.TotalPages ? PageLink(Model.Page + 1) : "#")" data-page="@(Model.Page + 1)"><i class="fas fa-angle-right"></i></a>
+            </li>
+        </ul>
+    }
+}

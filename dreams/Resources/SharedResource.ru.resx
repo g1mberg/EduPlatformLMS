@@ -192,4 +192,19 @@
   <data name="Chat.MongoOffWarning"><value>MongoDB не подключена — история чата хранится только в памяти процесса и пропадёт при перезапуске.</value></data>
   <data name="Chat.BackToCourse"><value>К курсу</value></data>
   <data name="Chat.InstructorBadge"><value>инструктор</value></data>
+
+  <!-- Admin -->
+  <data name="Admin.NavDashboard"><value>Дашборд</value></data>
+  <data name="Admin.NavUsers"><value>Пользователи</value></data>
+  <data name="Admin.NavCourses"><value>Курсы</value></data>
+  <data name="Admin.NavCategories"><value>Категории</value></data>
+  <data name="Admin.NavPlans"><value>Планы подписок</value></data>
+  <data name="Admin.NavSubscriptions"><value>Подписки</value></data>
+  <data name="Admin.NavReviews"><value>Отзывы</value></data>
+  <data name="Admin.NavCertificates"><value>Сертификаты</value></data>
+  <data name="Admin.NavFinance"><value>Финансы</value></data>
+  <data name="Admin.NavLogs"><value>Логи</value></data>
+  <data name="Admin.NavSiteLink"><value>На сайт</value></data>
+  <data name="Admin.NavManagement"><value>Управление</value></data>
+  <data name="Admin.NavAccount"><value>Аккаунт</value></data>
 </root>

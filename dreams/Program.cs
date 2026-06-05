@@ -102,12 +102,15 @@ using (var scope = app.Services.CreateScope())
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// Сначала собственный перехватчик — пишет в Mongo + ILogger
+app.UseMiddleware<GlobalExceptionMiddleware>();
+// Потом стандартный StatusCodePages: рендерит /error/{code} для всего что не 2xx
 app.UseStatusCodePagesWithReExecute("/error/{0}");
+
+app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 var locOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<Microsoft.AspNetCore.Builder.RequestLocalizationOptions>>().Value;
