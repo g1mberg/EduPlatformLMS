@@ -18,6 +18,145 @@ public static class DbSeeder
         await SeedCoursesAsync(db, instructor.Id);
         await SeedLessonsAsync(db);
         await SeedTestsAsync(db);
+        await SeedDemoStudentsAsync(userManager);
+        await SeedReviewsAndPurchasesAsync(db, userManager);
+    }
+
+    private static async Task SeedDemoStudentsAsync(UserManager<ApplicationUser> userManager)
+    {
+        var students = new[]
+        {
+            ("alice@example.com", "Alice Hopper", 5000m),
+            ("bob@example.com", "Bob Newton", 3000m),
+            ("charlie@example.com", "Charlie Knight", 2000m)
+        };
+        foreach (var (email, name, credits) in students)
+        {
+            if (await userManager.FindByEmailAsync(email) is not null) continue;
+            var u = new ApplicationUser
+            {
+                UserName = email,
+                Email = email,
+                FullName = name,
+                EmailConfirmed = true,
+                Credits = credits,
+                AvatarUrl = "/assets/img/user/user-29.jpg"
+            };
+            var r = await userManager.CreateAsync(u, "DemoStudent!1");
+            if (r.Succeeded)
+                await userManager.AddToRoleAsync(u, "Student");
+        }
+    }
+
+    private static async Task SeedReviewsAndPurchasesAsync(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
+    {
+        // Если уже есть отзывы — не дублируем
+        if (await db.Reviews.AnyAsync()) return;
+
+        var students = await db.Users
+            .Where(u => u.Email != null && (u.Email == "alice@example.com" || u.Email == "bob@example.com" || u.Email == "charlie@example.com"))
+            .ToListAsync();
+        if (students.Count == 0) return;
+
+        var courses = await db.Courses
+            .Include(c => c.Sections).ThenInclude(s => s.Lessons)
+            .OrderBy(c => c.CreatedAt)
+            .Take(6)
+            .ToListAsync();
+
+        var rng = new Random(42); // детерминированный сид
+        var sampleTexts = new[]
+        {
+            "Отличный курс, материал подан понятно. Рекомендую!",
+            "Очень полезно для новичков. Жду продолжения.",
+            "Достойный курс, но местами не хватает практики.",
+            "Прошёл с удовольствием, всё структурировано.",
+            "Хороший набор тем, инструктор отвечает на вопросы.",
+            "Полезный курс для портфолио и реальных задач.",
+            null, null  // часть отзывов без текста
+        };
+
+        var commissionPct = 30m; // у demo-инструктора нет подписки → Free
+
+        foreach (var student in students)
+        {
+            // Каждый студент записывается на 2-3 курса
+            var pickedCourses = courses.OrderBy(_ => rng.Next()).Take(rng.Next(2, 4)).ToList();
+            foreach (var course in pickedCourses)
+            {
+                // Запись
+                var enrollment = new Enrollment
+                {
+                    Id = Guid.NewGuid(),
+                    StudentId = student.Id,
+                    CourseId = course.Id,
+                    EnrolledAt = DateTime.UtcNow.AddDays(-rng.Next(1, 90)),
+                    ProgressPercent = rng.Next(20, 101)
+                };
+                db.Enrollments.Add(enrollment);
+                course.StudentsCount += 1;
+
+                // Покупка платного курса
+                if (course.Price > 0 && student.Credits >= course.Price)
+                {
+                    var commission = Math.Round(course.Price * commissionPct / 100m, 2);
+                    var net = course.Price - commission;
+                    student.Credits -= course.Price;
+
+                    db.Transactions.Add(new Transaction
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = course.InstructorId,
+                        Amount = net,
+                        Type = TransactionType.CoursePurchase,
+                        RelatedCourseId = course.Id,
+                        Description = $"Покупка курса «{course.Title}» (студент {student.FullName})",
+                        CreatedAt = enrollment.EnrolledAt
+                    });
+                    db.Transactions.Add(new Transaction
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = course.InstructorId,
+                        Amount = -commission,
+                        Type = TransactionType.PlatformCommission,
+                        RelatedCourseId = course.Id,
+                        Description = $"Комиссия {commissionPct:0.#}% с курса «{course.Title}»",
+                        CreatedAt = enrollment.EnrolledAt
+                    });
+
+                    // Зачисляем инструктору
+                    var instructorUser = await db.Users.FirstOrDefaultAsync(u => u.Id == course.InstructorId);
+                    if (instructorUser is not null) instructorUser.Credits += net;
+                }
+
+                // Отзыв (с вероятностью 70%)
+                if (rng.NextDouble() < 0.7)
+                {
+                    var rating = rng.Next(3, 6); // 3..5
+                    var text = sampleTexts[rng.Next(sampleTexts.Length)];
+                    db.Reviews.Add(new Review
+                    {
+                        Id = Guid.NewGuid(),
+                        CourseId = course.Id,
+                        StudentId = student.Id,
+                        Rating = rating,
+                        Text = text,
+                        IsApproved = true,
+                        CreatedAt = enrollment.EnrolledAt.AddDays(rng.Next(1, 7))
+                    });
+                }
+            }
+        }
+
+        // Пересчёт AverageRating
+        await db.SaveChangesAsync();
+        var coursesWithReviews = await db.Courses.Where(c => c.Reviews.Any(r => r.IsApproved)).ToListAsync();
+        foreach (var c in coursesWithReviews)
+        {
+            var ratings = await db.Reviews.Where(r => r.CourseId == c.Id && r.IsApproved).Select(r => r.Rating).ToListAsync();
+            c.AverageRating = ratings.Count == 0 ? 0m : Math.Round((decimal)ratings.Average(), 2);
+        }
+        await db.SaveChangesAsync();
     }
 
     private static async Task EnsureAdminAsync(UserManager<ApplicationUser> userManager)

@@ -35,9 +35,8 @@ public class InstructorController : Controller
         _notifications = notifications;
     }
 
-    [AllowAnonymous]
     [HttpGet("profile")]
-    public IActionResult Profile() => View();
+    public IActionResult Profile() => Redirect("/account/profile");
 
     [HttpGet("dashboard")]
     public async Task<IActionResult> Dashboard()

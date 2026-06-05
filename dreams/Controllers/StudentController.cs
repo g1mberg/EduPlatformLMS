@@ -33,9 +33,8 @@ public class StudentController : Controller
         _certificates = certificates;
     }
 
-    [AllowAnonymous]
     [HttpGet("profile")]
-    public IActionResult Profile() => View();
+    public IActionResult Profile() => Redirect("/account/profile");
 
     // ---------- Список моих курсов ----------
 
