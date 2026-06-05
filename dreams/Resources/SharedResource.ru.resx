@@ -32,16 +32,6 @@
   <data name="Common.Continue"><value>Продолжить</value></data>
 
   <!-- Home -->
-  <data name="Home.HeroEyebrow"><value>Учитесь у лучших</value></data>
-  <data name="Home.HeroTitle"><value>Прокачайте навыки на онлайн-курсах</value></data>
-  <data name="Home.HeroSubtitle"><value>Каталог из десятков курсов: программирование, дизайн, маркетинг, бизнес и многое другое.</value></data>
-  <data name="Home.BrowseCatalog"><value>Перейти к каталогу</value></data>
-  <data name="Home.BecomeInstructor"><value>Стать инструктором</value></data>
-  <data name="Home.FeaturesTitle"><value>Почему именно мы</value></data>
-  <data name="Home.FeatureExperts"><value>Эксперты-инструкторы</value></data>
-  <data name="Home.FeatureCerts"><value>Сертификаты по окончании</value></data>
-  <data name="Home.FeatureForever"><value>Доступ к материалам навсегда</value></data>
-  <data name="Home.FeatureChat"><value>Чат курса в реальном времени</value></data>
 
   <!-- Catalog -->
   <data name="Catalog.Title"><value>Каталог курсов</value></data>
@@ -207,4 +197,41 @@
   <data name="Admin.NavSiteLink"><value>На сайт</value></data>
   <data name="Admin.NavManagement"><value>Управление</value></data>
   <data name="Admin.NavAccount"><value>Аккаунт</value></data>
+
+  <!-- Home -->
+  <data name="Home.Badge"><value>EduPlatform LMS</value></data>
+  <data name="Home.Title1"><value>Учитесь онлайн</value></data>
+  <data name="Home.TitleAccent"><value>у лучших</value></data>
+  <data name="Home.Title2"><value>инструкторов</value></data>
+  <data name="Home.Sub"><value>Каталог из десятков курсов: программирование, дизайн, маркетинг, бизнес. Записывайтесь, проходите тесты и получайте сертификаты — всё в одной платформе.</value></data>
+  <data name="Home.OpenCatalog"><value>Открыть каталог</value></data>
+  <data name="Home.SignUp"><value>Зарегистрироваться</value></data>
+  <data name="Home.BecomeInstructor"><value>Стать инструктором</value></data>
+  <data name="Home.StatCoursesPub"><value>опубликованных курсов</value></data>
+  <data name="Home.StatStudents"><value>студентов</value></data>
+  <data name="Home.StatInstructors"><value>инструкторов</value></data>
+  <data name="Home.StatCertsIssued"><value>сертификатов выдано</value></data>
+  <data name="Home.CategoriesTitle"><value>Категории курсов</value></data>
+  <data name="Home.CategoriesSub"><value>Найдите направление, которое вам интересно</value></data>
+  <data name="Home.FeaturedTitle"><value>Популярные курсы</value></data>
+  <data name="Home.FeaturedSub"><value>Топ по рейтингу и количеству студентов</value></data>
+  <data name="Home.AllCourses"><value>Все курсы</value></data>
+  <data name="Home.WhyTitle"><value>Почему EduPlatform</value></data>
+  <data name="Home.WhySub"><value>Полный цикл онлайн-обучения: от регистрации до сертификата</value></data>
+  <data name="Home.WhyCatalog"><value>Каталог из БД</value></data>
+  <data name="Home.WhyCatalogD"><value>Фильтры, поиск, сортировка, пагинация. Все курсы — реальные.</value></data>
+  <data name="Home.WhyCerts"><value>Сертификаты</value></data>
+  <data name="Home.WhyCertsD"><value>Автовыдача при 100% прогрессе и сданных тестах.</value></data>
+  <data name="Home.WhyChat"><value>Real-time чат</value></data>
+  <data name="Home.WhyChatD"><value>SignalR-чат для каждого курса, история в MongoDB.</value></data>
+  <data name="Home.WhySecurity"><value>Безопасность</value></data>
+  <data name="Home.WhySecurityD"><value>Email-подтверждение, 2FA TOTP, CSRF-защита на формах.</value></data>
+  <data name="Home.TopInstrTitle"><value>Топ инструкторов</value></data>
+  <data name="Home.TopInstrSub"><value>Лидеры по количеству студентов</value></data>
+  <data name="Home.CtaTitle"><value>Готовы преподавать?</value></data>
+  <data name="Home.CtaSub"><value>Выберите план подписки и начните создавать курсы. Free — без оплаты, до 3 курсов.</value></data>
+  <data name="Home.CtaPlans"><value>Тарифы подписки</value></data>
+  <data name="Home.CtaAbout"><value>О платформе</value></data>
+  <data name="Home.CoursesUnit"><value>курсов</value></data>
+  <data name="Home.StudentsUnit"><value>студентов</value></data>
 </root>

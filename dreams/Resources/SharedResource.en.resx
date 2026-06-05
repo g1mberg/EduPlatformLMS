@@ -29,16 +29,6 @@
   <data name="Common.Free"><value>Free</value></data>
   <data name="Common.Continue"><value>Continue</value></data>
 
-  <data name="Home.HeroEyebrow"><value>Learn from the best</value></data>
-  <data name="Home.HeroTitle"><value>Level up your skills with online courses</value></data>
-  <data name="Home.HeroSubtitle"><value>A catalog of dozens of courses: programming, design, marketing, business and more.</value></data>
-  <data name="Home.BrowseCatalog"><value>Browse catalog</value></data>
-  <data name="Home.BecomeInstructor"><value>Become an instructor</value></data>
-  <data name="Home.FeaturesTitle"><value>Why choose us</value></data>
-  <data name="Home.FeatureExperts"><value>Expert instructors</value></data>
-  <data name="Home.FeatureCerts"><value>Certificates on completion</value></data>
-  <data name="Home.FeatureForever"><value>Lifetime access to materials</value></data>
-  <data name="Home.FeatureChat"><value>Real-time course chat</value></data>
 
   <data name="Catalog.Title"><value>Course catalog</value></data>
   <data name="Catalog.Search"><value>Search</value></data>
@@ -195,4 +185,40 @@
   <data name="Admin.NavSiteLink"><value>Back to site</value></data>
   <data name="Admin.NavManagement"><value>Management</value></data>
   <data name="Admin.NavAccount"><value>Account</value></data>
+
+  <data name="Home.Badge"><value>EduPlatform LMS</value></data>
+  <data name="Home.Title1"><value>Learn online</value></data>
+  <data name="Home.TitleAccent"><value>from the best</value></data>
+  <data name="Home.Title2"><value>instructors</value></data>
+  <data name="Home.Sub"><value>Dozens of courses: programming, design, marketing, business. Enroll, take tests and earn certificates — all in one platform.</value></data>
+  <data name="Home.OpenCatalog"><value>Open catalog</value></data>
+  <data name="Home.SignUp"><value>Sign up</value></data>
+  <data name="Home.BecomeInstructor"><value>Become an instructor</value></data>
+  <data name="Home.StatCoursesPub"><value>published courses</value></data>
+  <data name="Home.StatStudents"><value>students</value></data>
+  <data name="Home.StatInstructors"><value>instructors</value></data>
+  <data name="Home.StatCertsIssued"><value>certificates issued</value></data>
+  <data name="Home.CategoriesTitle"><value>Course categories</value></data>
+  <data name="Home.CategoriesSub"><value>Find the topic that interests you</value></data>
+  <data name="Home.FeaturedTitle"><value>Popular courses</value></data>
+  <data name="Home.FeaturedSub"><value>Top by rating and students count</value></data>
+  <data name="Home.AllCourses"><value>All courses</value></data>
+  <data name="Home.WhyTitle"><value>Why EduPlatform</value></data>
+  <data name="Home.WhySub"><value>Full online-learning cycle: from sign-up to certificate</value></data>
+  <data name="Home.WhyCatalog"><value>Real catalog</value></data>
+  <data name="Home.WhyCatalogD"><value>Filters, search, sort, pagination. All courses are real data.</value></data>
+  <data name="Home.WhyCerts"><value>Certificates</value></data>
+  <data name="Home.WhyCertsD"><value>Auto-issued on 100% progress + passed tests.</value></data>
+  <data name="Home.WhyChat"><value>Real-time chat</value></data>
+  <data name="Home.WhyChatD"><value>SignalR chat per course, history in MongoDB.</value></data>
+  <data name="Home.WhySecurity"><value>Security</value></data>
+  <data name="Home.WhySecurityD"><value>Email confirmation, 2FA TOTP, CSRF protection.</value></data>
+  <data name="Home.TopInstrTitle"><value>Top instructors</value></data>
+  <data name="Home.TopInstrSub"><value>Leaders by enrolled students</value></data>
+  <data name="Home.CtaTitle"><value>Ready to teach?</value></data>
+  <data name="Home.CtaSub"><value>Choose a subscription plan and start creating courses. Free — no payment, up to 3 courses.</value></data>
+  <data name="Home.CtaPlans"><value>Subscription plans</value></data>
+  <data name="Home.CtaAbout"><value>About platform</value></data>
+  <data name="Home.CoursesUnit"><value>courses</value></data>
+  <data name="Home.StudentsUnit"><value>students</value></data>
 </root>

@@ -72,31 +72,31 @@
     <div class="container position-relative" style="z-index: 1;">
         <div class="row align-items-center">
             <div class="col-lg-7">
-                <span class="badge bg-white text-secondary mb-3 px-3 py-2">EduPlatform LMS</span>
-                <h1 class="mb-3">Учитесь онлайн <span class="accent">у лучших</span> инструкторов</h1>
+                <span class="badge bg-white text-secondary mb-3 px-3 py-2">@L["Home.Badge"]</span>
+                <h1 class="mb-3">@L["Home.Title1"] <span class="accent">@L["Home.TitleAccent"]</span> @L["Home.Title2"]</h1>
                 <p class="lead opacity-85 mb-4" style="max-width: 600px;">
-                    Каталог из десятков курсов: программирование, дизайн, маркетинг, бизнес. Записывайтесь, проходите тесты и получайте сертификаты — всё в одной платформе.
+                    @L["Home.Sub"]
                 </p>
                 <div class="d-flex gap-2 flex-wrap">
                     <a href="/courses" class="btn btn-light btn-lg fw-semibold">
-                        <i class="isax isax-book me-1"></i>Открыть каталог
+                        <i class="isax isax-book me-1"></i>@L["Home.OpenCatalog"]
                     </a>
                     @if (User?.Identity?.IsAuthenticated != true)
                     {
-                        <a href="/account/register" class="btn btn-outline-light btn-lg">Зарегистрироваться</a>
+                        <a href="/account/register" class="btn btn-outline-light btn-lg">@L["Home.SignUp"]</a>
                     }
                     else
                     {
                         <a href="/instructor/subscription" class="btn btn-outline-light btn-lg">
-                            <i class="isax isax-crown me-1"></i>Стать инструктором
+                            <i class="isax isax-crown me-1"></i>@L["Home.BecomeInstructor"]
                         </a>
                     }
                 </div>
                 <div class="hero-stats">
-                    <div class="stat"><div class="n">@Model.TotalCourses</div><div class="l">опубликованных курсов</div></div>
-                    <div class="stat"><div class="n">@Model.TotalStudents</div><div class="l">студентов</div></div>
-                    <div class="stat"><div class="n">@Model.TotalInstructors</div><div class="l">инструкторов</div></div>
-                    <div class="stat"><div class="n">@Model.CertificatesIssued</div><div class="l">сертификатов выдано</div></div>
+                    <div class="stat"><div class="n">@Model.TotalCourses</div><div class="l">@L["Home.StatCoursesPub"]</div></div>
+                    <div class="stat"><div class="n">@Model.TotalStudents</div><div class="l">@L["Home.StatStudents"]</div></div>
+                    <div class="stat"><div class="n">@Model.TotalInstructors</div><div class="l">@L["Home.StatInstructors"]</div></div>
+                    <div class="stat"><div class="n">@Model.CertificatesIssued</div><div class="l">@L["Home.StatCertsIssued"]</div></div>
                 </div>
             </div>
             <div class="col-lg-5 d-none d-lg-block text-center">
@@ -111,8 +111,8 @@
     <section class="py-5">
         <div class="container">
             <div class="text-center mb-4">
-                <h3 class="mb-1">Категории курсов</h3>
-                <p class="text-muted">Найдите направление, которое вам интересно</p>
+                <h3 class="mb-1">@L["Home.CategoriesTitle"]</h3>
+                <p class="text-muted">@L["Home.CategoriesSub"]</p>
             </div>
             <div class="d-flex flex-wrap justify-content-center gap-2">
                 @foreach (var c in Model.Categories)
@@ -132,10 +132,10 @@
         <div class="container">
             <div class="d-flex justify-content-between align-items-end mb-4 flex-wrap gap-2">
                 <div>
-                    <h3 class="mb-1">Популярные курсы</h3>
-                    <p class="text-muted mb-0">Топ по рейтингу и количеству студентов</p>
+                    <h3 class="mb-1">@L["Home.FeaturedTitle"]</h3>
+                    <p class="text-muted mb-0">@L["Home.FeaturedSub"]</p>
                 </div>
-                <a href="/courses" class="btn btn-outline-primary">Все курсы<i class="isax isax-arrow-right-3 ms-1"></i></a>
+                <a href="/courses" class="btn btn-outline-primary">@L["Home.AllCourses"]<i class="isax isax-arrow-right-3 ms-1"></i></a>
             </div>
             <div class="row g-3">
                 @foreach (var c in Model.FeaturedCourses)
@@ -155,11 +155,11 @@
                                 <h6 class="mb-2"><a href="/courses/@c.Slug" class="link-default">@c.Title</a></h6>
                                 <div class="text-muted small mb-3">
                                     <a href="/instructors/@c.InstructorId" class="link-secondary">@c.Instructor.FullName</a>
-                                    · @c.StudentsCount студентов
+                                    · @c.StudentsCount @L["Home.StudentsUnit"]
                                 </div>
                                 <div class="mt-auto d-flex justify-content-between align-items-center">
                                     <span class="@(c.Price == 0 ? "text-success" : "text-secondary") fw-bold">@PriceLabel(c.Price)</span>
-                                    <a href="/courses/@c.Slug" class="btn btn-sm btn-dark">Подробнее</a>
+                                    <a href="/courses/@c.Slug" class="btn btn-sm btn-dark">@L["Catalog.Details"]</a>
                                 </div>
                             </div>
                         </div>
@@ -173,36 +173,36 @@
 <section class="py-5">
     <div class="container">
         <div class="text-center mb-4">
-            <h3 class="mb-1">Почему EduPlatform</h3>
-            <p class="text-muted">Полный цикл онлайн-обучения: от регистрации до сертификата</p>
+            <h3 class="mb-1">@L["Home.WhyTitle"]</h3>
+            <p class="text-muted">@L["Home.WhySub"]</p>
         </div>
         <div class="row g-3">
             <div class="col-md-6 col-lg-3">
                 <div class="feature-card">
                     <div class="feature-ico"><i class="isax isax-book"></i></div>
-                    <h6>Каталог из БД</h6>
-                    <p class="text-muted small mb-0">Фильтры, поиск, сортировка, пагинация. Все курсы — реальные.</p>
+                    <h6>@L["Home.WhyCatalog"]</h6>
+                    <p class="text-muted small mb-0">@L["Home.WhyCatalogD"]</p>
                 </div>
             </div>
             <div class="col-md-6 col-lg-3">
                 <div class="feature-card">
                     <div class="feature-ico"><i class="isax isax-medal"></i></div>
-                    <h6>Сертификаты</h6>
-                    <p class="text-muted small mb-0">Автовыдача при 100% прогрессе и сданных тестах.</p>
+                    <h6>@L["Home.WhyCerts"]</h6>
+                    <p class="text-muted small mb-0">@L["Home.WhyCertsD"]</p>
                 </div>
             </div>
             <div class="col-md-6 col-lg-3">
                 <div class="feature-card">
                     <div class="feature-ico"><i class="isax isax-message"></i></div>
-                    <h6>Real-time чат</h6>
-                    <p class="text-muted small mb-0">SignalR-чат для каждого курса, история в MongoDB.</p>
+                    <h6>@L["Home.WhyChat"]</h6>
+                    <p class="text-muted small mb-0">@L["Home.WhyChatD"]</p>
                 </div>
             </div>
             <div class="col-md-6 col-lg-3">
                 <div class="feature-card">
                     <div class="feature-ico"><i class="isax isax-shield-tick"></i></div>
-                    <h6>Безопасность</h6>
-                    <p class="text-muted small mb-0">Email-подтверждение, 2FA TOTP, CSRF-защита на формах.</p>
+                    <h6>@L["Home.WhySecurity"]</h6>
+                    <p class="text-muted small mb-0">@L["Home.WhySecurityD"]</p>
                 </div>
             </div>
         </div>
@@ -214,8 +214,8 @@
     <section class="py-5" style="background: #fafbff;">
         <div class="container">
             <div class="text-center mb-4">
-                <h3 class="mb-1">Топ инструкторов</h3>
-                <p class="text-muted">Лидеры по количеству студентов</p>
+                <h3 class="mb-1">@L["Home.TopInstrTitle"]</h3>
+                <p class="text-muted">@L["Home.TopInstrSub"]</p>
             </div>
             <div class="row g-3 justify-content-center">
                 @foreach (var i in Model.TopInstructors)
@@ -225,7 +225,7 @@
                             <div class="inst-card">
                                 <img class="inst-avatar" src="@(string.IsNullOrEmpty(i.AvatarUrl) ? "/assets/img/user/user-29.jpg" : i.AvatarUrl)" alt="">
                                 <div class="fw-semibold">@i.Name</div>
-                                <div class="text-muted small">@i.CoursesCount курсов · @i.StudentsCount студентов</div>
+                                <div class="text-muted small">@i.CoursesCount @L["Home.CoursesUnit"] · @i.StudentsCount @L["Home.StudentsUnit"]</div>
                                 @if (i.AverageRating > 0)
                                 {
                                     <div class="text-warning small mt-1">
@@ -245,14 +245,14 @@
     <div class="container">
         <div class="cta-banner">
             <div>
-                <h3 class="text-white mb-2">Готовы преподавать?</h3>
-                <p class="text-white-50 mb-0" style="max-width: 480px;">Выберите план подписки и начните создавать курсы. Free — без оплаты, до 3 курсов.</p>
+                <h3 class="text-white mb-2">@L["Home.CtaTitle"]</h3>
+                <p class="text-white-50 mb-0" style="max-width: 480px;">@L["Home.CtaSub"]</p>
             </div>
             <div class="d-flex gap-2 flex-wrap">
                 <a href="/instructor/subscription" class="btn btn-light fw-semibold">
-                    <i class="isax isax-crown me-1"></i>Тарифы подписки
+                    <i class="isax isax-crown me-1"></i>@L["Home.CtaPlans"]
                 </a>
-                <a href="/about" class="btn btn-outline-light">О платформе</a>
+                <a href="/about" class="btn btn-outline-light">@L["Home.CtaAbout"]</a>
             </div>
         </div>
     </div>
