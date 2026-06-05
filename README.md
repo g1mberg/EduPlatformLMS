@@ -144,16 +144,6 @@ dreams/
 - [ ] Clean Architecture: вынести Domain / Application / Infrastructure / Web
 - [ ] Полная локализация всех вьюх (сейчас покрыты nav и часть auth)
 
-## Подводные камни
-
-Что наступил по пути — собрано в [CLAUDE.md](CLAUDE.md). Самые показательные:
-
-- **.NET 10 Razor энкодит кириллицу в `&#x...`** по умолчанию. Лечится `WebEncoderOptions` с `UnicodeRanges.All`.
-- **`@section` — зарезервированное слово Razor**, нельзя использовать как имя переменной в `@foreach` — `@section.Title` парсится как директива.
-- **bool-checkbox без TagHelper** требует строгого порядка `<input type=checkbox>` ПЕРЕД `<input type=hidden>`.
-- **`MapStaticAssets()` в .NET 10** работает по build-time манифесту — переключил на `UseStaticFiles()`.
-- **SQL Server multiple cascade paths** — пришлось ставить `Restrict / NoAction` на FK к `User`.
-
 ## Лицензия
 
 [MIT](LICENSE)
