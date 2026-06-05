@@ -1,6 +1,6 @@
 @model IReadOnlyList<dreams.Models.Entities.Course>
 @{
-    ViewData["Title"] = "Мои курсы";
+    ViewData["Title"] = L["Instructor.MyCoursesTitle"].Value;
     ViewData["DashboardArea"] = "instructor";
     Layout = "_DashboardLayout";
 
@@ -14,7 +14,7 @@
 
 <div class="breadcrumb-bar text-center">
     <div class="container">
-        <h2 class="breadcrumb-title mb-2">Мои курсы</h2>
+        <h2 class="breadcrumb-title mb-2">@L["Instructor.MyCoursesTitle"]</h2>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb justify-content-center mb-0">
                 <li class="breadcrumb-item"><a href="/">Главная</a></li>
@@ -38,16 +38,16 @@
 
         <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-2">
             <div>
-                <h4 class="mb-1">Курсы</h4>
+                <h4 class="mb-1">@L["Instructor.MyCoursesTitle"]</h4>
                 <p class="text-muted mb-0">
-                    Использовано слотов: <span class="fw-semibold">@limitText</span>.
-                    <a href="/instructor/subscription" class="link-secondary">Сменить план</a>
+                    @L["Instructor.SlotsUsed"]: <span class="fw-semibold">@limitText</span>.
+                    <a href="/instructor/subscription" class="link-secondary">@L["Instructor.ChangePlan"]</a>
                 </p>
             </div>
-            <a href="/instructor/courses/new"
+            <a href="/instructor/courses/wizard"
                class="btn btn-secondary @(atLimit ? "disabled" : "")"
                aria-disabled="@(atLimit ? "true" : "false")">
-                <i class="isax isax-add me-1"></i>Создать курс
+                <i class="isax isax-add me-1"></i>@L["Instructor.CreateCourse"]
             </a>
         </div>
 
@@ -56,11 +56,11 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-body text-center py-5">
                     <i class="isax isax-book fs-1 text-muted mb-3 d-block"></i>
-                    <h5>У вас пока нет курсов</h5>
-                    <p class="text-muted">Создайте первый курс, чтобы начать преподавать на платформе.</p>
+                    <h5>@L["Instructor.NoCoursesYet"]</h5>
+                    <p class="text-muted">@L["Instructor.NoCoursesHint"]</p>
                     @if (!atLimit)
                     {
-                        <a href="/instructor/courses/new" class="btn btn-secondary mt-2">Создать курс</a>
+                        <a href="/instructor/courses/wizard" class="btn btn-secondary mt-2">@L["Instructor.CreateCourse"]</a>
                     }
                 </div>
             </div>
@@ -71,12 +71,12 @@
                 <table class="table mb-0 align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>Курс</th>
-                            <th>Категория</th>
-                            <th class="text-end">Цена</th>
-                            <th class="text-center">Студенты</th>
-                            <th class="text-center">Статус</th>
-                            <th class="text-end">Действия</th>
+                            <th>@L["Instructor.ColCourse"]</th>
+                            <th>@L["Instructor.ColCategory"]</th>
+                            <th class="text-end">@L["Instructor.ColPrice"]</th>
+                            <th class="text-center">@L["Instructor.ColStudents"]</th>
+                            <th class="text-center">@L["Instructor.ColStatus"]</th>
+                            <th class="text-end">@L["Instructor.ColActions"]</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -93,22 +93,25 @@
                                     </div>
                                 </td>
                                 <td>@c.Category.Name</td>
-                                <td class="text-end">@(c.Price == 0 ? "Бесплатно" : $"{c.Price:N0} ₽")</td>
+                                <td class="text-end">@(c.Price == 0 ? L["Common.Free"].Value : $"{c.Price:N0} ₽")</td>
                                 <td class="text-center">@c.StudentsCount</td>
                                 <td class="text-center">
                                     @if (c.IsPublished)
                                     {
-                                        <span class="badge text-bg-success">Опубликован</span>
+                                        <span class="badge text-bg-success">@L["Instructor.StatusPublished"]</span>
                                     }
                                     else
                                     {
-                                        <span class="badge text-bg-secondary">Черновик</span>
+                                        <span class="badge text-bg-secondary">@L["Instructor.StatusDraft"]</span>
                                     }
                                 </td>
                                 <td class="text-end">
                                     <div class="d-inline-flex gap-2">
                                         <a href="/instructor/courses/@c.Id/edit" class="btn btn-sm btn-outline-secondary" title="Редактировать">
                                             <i class="isax isax-edit"></i>
+                                        </a>
+                                        <a href="/instructor/courses/@c.Id/tests" class="btn btn-sm btn-outline-secondary" title="Тесты">
+                                            <i class="isax isax-clipboard-text"></i>
                                         </a>
                                         <form method="post" action="/instructor/courses/@c.Id/publish" class="m-0">
                                             @Html.AntiForgeryToken()

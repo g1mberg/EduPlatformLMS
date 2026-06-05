@@ -1,6 +1,6 @@
 @model dreams.Models.Account.LoginViewModel
 @{
-    ViewData["Title"] = "Вход";
+    ViewData["Title"] = L["Auth.LoginTitle"].Value;
     Layout = "_AuthLayout";
 }
 
@@ -30,9 +30,9 @@
                         <div class="w-100">
                             <div class="d-flex align-items-center justify-content-between login-header">
                                 <img src="~/assets/img/logo.svg" class="img-fluid" alt="EduPlatform">
-                                <a href="/" class="link-1">На главную</a>
+                                <a href="/" class="link-1">@L["Nav.Home"]</a>
                             </div>
-                            <h1 class="fs-32 fw-bold topic">Вход в аккаунт</h1>
+                            <h1 class="fs-32 fw-bold topic">@L["Auth.LoginTitle"]</h1>
                             <form method="post" asp-action="Login" class="mb-3 pb-3">
                                 @Html.AntiForgeryToken()
                                 <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
@@ -45,7 +45,7 @@
                                     </div>
                                 }
                                 <div class="mb-3 position-relative">
-                                    <label asp-for="Email" class="form-label">Email<span class="text-danger ms-1">*</span></label>
+                                    <label asp-for="Email" class="form-label">@L["Auth.Email"]<span class="text-danger ms-1">*</span></label>
                                     <div class="position-relative">
                                         <input asp-for="Email" type="email" class="form-control form-control-lg">
                                         <span><i class="isax isax-sms input-icon text-gray-7 fs-14"></i></span>
@@ -53,7 +53,7 @@
                                     <span asp-validation-for="Email" class="text-danger small"></span>
                                 </div>
                                 <div class="mb-3 position-relative">
-                                    <label asp-for="Password" class="form-label">Пароль<span class="text-danger ms-1">*</span></label>
+                                    <label asp-for="Password" class="form-label">@L["Auth.Password"]<span class="text-danger ms-1">*</span></label>
                                     <div class="position-relative" id="passwordInput">
                                         <input asp-for="Password" type="password" class="pass-inputs form-control form-control-lg">
                                         <span class="isax toggle-passwords isax-eye-slash fs-14"></span>
@@ -63,17 +63,17 @@
                                 <div class="d-flex align-items-center justify-content-between mb-4">
                                     <div class="remember-me d-flex align-items-center">
                                         <input asp-for="RememberMe" class="form-check-input" type="checkbox">
-                                        <label asp-for="RememberMe" class="form-check-label ms-2">Запомнить меня</label>
+                                        <label asp-for="RememberMe" class="form-check-label ms-2">@L["Auth.RememberMe"]</label>
                                     </div>
-                                    <a href="/account/forgot" class="link-2">Забыли пароль?</a>
+                                    <a href="/account/forgot" class="link-2">@L["Auth.ForgotPassword"]</a>
                                 </div>
                                 <div class="d-grid">
-                                    <button class="btn btn-secondary btn-lg" type="submit">Войти <i class="isax isax-arrow-right-3 ms-1"></i></button>
+                                    <button class="btn btn-secondary btn-lg" type="submit">@L["Auth.LoginButton"] <i class="isax isax-arrow-right-3 ms-1"></i></button>
                                 </div>
                             </form>
 
                             <div class="fs-14 fw-normal d-flex align-items-center justify-content-center">
-                                Нет аккаунта?<a href="/account/register" class="link-2 ms-1">Зарегистрироваться</a>
+                                @L["Auth.NoAccount"]<a href="/account/register" class="link-2 ms-1">@L["Auth.RegisterButton"]</a>
                             </div>
 
                         </div>

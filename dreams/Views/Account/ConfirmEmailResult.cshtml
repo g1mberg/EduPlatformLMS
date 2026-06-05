@@ -1,6 +1,6 @@
 @model (bool Success, string Message)
 @{
-    ViewData["Title"] = Model.Success ? "Email подтверждён" : "Ошибка подтверждения";
+    ViewData["Title"] = (Model.Success ? L["Auth.ConfirmOk"] : L["Auth.ConfirmFail"]).Value;
     Layout = "_AuthLayout";
 }
 
@@ -25,16 +25,16 @@
                             @if (Model.Success)
                             {
                                 <i class="isax isax-tick-circle text-success" style="font-size: 64px;"></i>
-                                <h1 class="fs-32 fw-bold mt-3">Email подтверждён</h1>
+                                <h1 class="fs-32 fw-bold mt-3">@L["Auth.ConfirmOk"]</h1>
                                 <p class="text-muted">@Model.Message</p>
-                                <a href="/account/login" class="btn btn-secondary mt-3">Войти</a>
+                                <a href="/account/login" class="btn btn-secondary mt-3">@L["Auth.LoginButton"]</a>
                             }
                             else
                             {
                                 <i class="isax isax-close-circle text-danger" style="font-size: 64px;"></i>
-                                <h1 class="fs-32 fw-bold mt-3">Не удалось подтвердить</h1>
+                                <h1 class="fs-32 fw-bold mt-3">@L["Auth.ConfirmFail"]</h1>
                                 <p class="text-muted">@Model.Message</p>
-                                <a href="/account/login" class="btn btn-outline-secondary mt-3">Назад ко входу</a>
+                                <a href="/account/login" class="btn btn-outline-secondary mt-3">@L["Auth.GoToLogin"]</a>
                             }
                         </div>
                     </div>

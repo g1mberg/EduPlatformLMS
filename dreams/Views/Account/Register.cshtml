@@ -1,6 +1,6 @@
 @model dreams.Models.Account.RegisterViewModel
 @{
-    ViewData["Title"] = "Регистрация";
+    ViewData["Title"] = L["Auth.RegisterTitle"].Value;
     Layout = "_AuthLayout";
 }
 
@@ -30,14 +30,14 @@
                         <div class="w-100">
                             <div class="d-flex align-items-center justify-content-between login-header">
                                 <img src="~/assets/img/logo.svg" class="img-fluid" alt="EduPlatform">
-                                <a href="/" class="link-1">На главную</a>
+                                <a href="/" class="link-1">@L["Nav.Home"]</a>
                             </div>
-                            <h1 class="fs-32 fw-bold topic">Регистрация</h1>
+                            <h1 class="fs-32 fw-bold topic">@L["Auth.RegisterTitle"]</h1>
                             <form method="post" asp-action="Register" class="mb-3 pb-3">
                                 @Html.AntiForgeryToken()
                                 <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
                                 <div class="mb-3 position-relative">
-                                    <label asp-for="FullName" class="form-label">Имя<span class="text-danger ms-1">*</span></label>
+                                    <label asp-for="FullName" class="form-label">@L["Auth.FullName"]<span class="text-danger ms-1">*</span></label>
                                     <div class="position-relative">
                                         <input asp-for="FullName" type="text" class="form-control form-control-lg">
                                         <span><i class="isax isax-user input-icon text-gray-7 fs-14"></i></span>
@@ -45,7 +45,7 @@
                                     <span asp-validation-for="FullName" class="text-danger small"></span>
                                 </div>
                                 <div class="mb-3 position-relative">
-                                    <label asp-for="Email" class="form-label">Email<span class="text-danger ms-1">*</span></label>
+                                    <label asp-for="Email" class="form-label">@L["Auth.Email"]<span class="text-danger ms-1">*</span></label>
                                     <div class="position-relative">
                                         <input asp-for="Email" type="email" class="form-control form-control-lg">
                                         <span><i class="isax isax-sms input-icon text-gray-7 fs-14"></i></span>
@@ -53,7 +53,7 @@
                                     <span asp-validation-for="Email" class="text-danger small"></span>
                                 </div>
                                 <div class="mb-3 position-relative">
-                                    <label asp-for="Password" class="form-label">Пароль<span class="text-danger"> *</span></label>
+                                    <label asp-for="Password" class="form-label">@L["Auth.Password"]<span class="text-danger"> *</span></label>
                                     <div class="position-relative" id="passwordInput">
                                         <input asp-for="Password" type="password" class="pass-inputs form-control form-control-lg">
                                         <span class="isax toggle-passwords isax-eye-slash text-gray-7 fs-14"></span>
@@ -62,7 +62,7 @@
                                     <span asp-validation-for="Password" class="text-danger small"></span>
                                 </div>
                                 <div class="mb-3 position-relative">
-                                    <label asp-for="ConfirmPassword" class="form-label">Подтвердите пароль<span class="text-danger"> *</span></label>
+                                    <label asp-for="ConfirmPassword" class="form-label">@L["Auth.ConfirmPassword"]<span class="text-danger"> *</span></label>
                                     <div class="position-relative">
                                         <input asp-for="ConfirmPassword" type="password" class="pass-inputa form-control form-control-lg">
                                         <span class="isax toggle-passworda isax-eye-slash text-gray-7 fs-14"></span>
@@ -78,12 +78,12 @@
                                     </div>
                                 </div>
                                 <div class="d-grid">
-                                    <button class="btn btn-secondary btn-lg" type="submit">Зарегистрироваться <i class="isax isax-arrow-right-3 ms-1"></i></button>
+                                    <button class="btn btn-secondary btn-lg" type="submit">@L["Auth.RegisterButton"] <i class="isax isax-arrow-right-3 ms-1"></i></button>
                                 </div>
                             </form>
 
                             <div class="fs-14 fw-normal d-flex align-items-center justify-content-center">
-                                Уже есть аккаунт?<a href="/account/login" class="link-2 ms-1">Войти</a>
+                                @L["Auth.HaveAccount"]<a href="/account/login" class="link-2 ms-1">@L["Auth.LoginButton"]</a>
                             </div>
 
                         </div>

@@ -22,8 +22,13 @@ public static class DbSeeder
     private static async Task EnsureAdminAsync(UserManager<ApplicationUser> userManager)
     {
         const string email = "admin@eduplatform.local";
+        const string password = "Admin!Pass1";
         var user = await userManager.FindByEmailAsync(email);
-        if (user is not null) return;
+        if (user is not null)
+        {
+            await ForceResetPasswordAsync(userManager, user, password);
+            return;
+        }
 
         user = new ApplicationUser
         {
@@ -32,10 +37,21 @@ public static class DbSeeder
             FullName = "Администратор",
             EmailConfirmed = true
         };
-        var result = await userManager.CreateAsync(user, "Admin!Pass1");
+        var result = await userManager.CreateAsync(user, password);
         if (!result.Succeeded)
             throw new Exception("Не удалось создать админа: " + string.Join("; ", result.Errors.Select(e => e.Description)));
         await userManager.AddToRoleAsync(user, "Admin");
+    }
+
+    private static async Task ForceResetPasswordAsync(UserManager<ApplicationUser> userManager, ApplicationUser user, string newPassword)
+    {
+        var token = await userManager.GeneratePasswordResetTokenAsync(user);
+        await userManager.ResetPasswordAsync(user, token, newPassword);
+        if (user.LockoutEnd.HasValue)
+        {
+            await userManager.SetLockoutEndDateAsync(user, null);
+            await userManager.ResetAccessFailedCountAsync(user);
+        }
     }
 
     private static async Task SeedTestsAsync(ApplicationDbContext db)
@@ -162,8 +178,13 @@ public static class DbSeeder
     private static async Task<ApplicationUser> EnsureDemoInstructorAsync(UserManager<ApplicationUser> userManager)
     {
         const string email = "demo.instructor@eduplatform.local";
+        const string password = "DemoInstructor!1";
         var user = await userManager.FindByEmailAsync(email);
-        if (user is not null) return user;
+        if (user is not null)
+        {
+            await ForceResetPasswordAsync(userManager, user, password);
+            return user;
+        }
 
         user = new ApplicationUser
         {
@@ -173,7 +194,7 @@ public static class DbSeeder
             EmailConfirmed = true,
             AvatarUrl = "/assets/img/user/user-29.jpg"
         };
-        var result = await userManager.CreateAsync(user, "DemoInstructor!1");
+        var result = await userManager.CreateAsync(user, password);
         if (!result.Succeeded)
             throw new Exception("Не удалось создать демо-инструктора: " +
                 string.Join("; ", result.Errors.Select(e => e.Description)));

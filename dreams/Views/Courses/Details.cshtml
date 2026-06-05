@@ -4,7 +4,7 @@
     ViewData["Title"] = c.Title;
     Layout = "_InnerLayout";
 
-    string PriceLabel(decimal p) => p == 0 ? "Бесплатно" : $"{p:N0} ₽";
+    string PriceLabel(decimal p) => p == 0 ? L["Common.Free"].Value : $"{p:N0} ₽";
     var toast = TempData["Toast"] as string;
 }
 
@@ -29,7 +29,7 @@
         }
         @if (!c.IsPublished)
         {
-            <div class="alert alert-warning">Этот курс не опубликован. Вы видите его как владелец.</div>
+            <div class="alert alert-warning">@L["Course.NotPublishedOwner"]</div>
         }
 
         <div class="row">
@@ -42,8 +42,8 @@
                             <h3 class="mb-2">@c.Title</h3>
                             <p class="fs-14 mb-3">@c.Description</p>
                             <div class="d-flex align-items-center gap-3 flex-wrap mb-3">
-                                <span class="d-flex align-items-center"><i class="isax isax-book me-2"></i>@Model.LessonsCount уроков</span>
-                                <span class="d-flex align-items-center"><i class="isax isax-people me-2"></i>@c.StudentsCount студентов</span>
+                                <span class="d-flex align-items-center"><i class="isax isax-book me-2"></i>@Model.LessonsCount @L["Course.Lessons"]</span>
+                                <span class="d-flex align-items-center"><i class="isax isax-people me-2"></i>@c.StudentsCount @L["Course.Students"]</span>
                                 <span class="d-flex align-items-center"><i class="fa-solid fa-star text-warning me-2"></i>@c.AverageRating.ToString("0.0")</span>
                                 <span class="d-flex align-items-center"><i class="isax isax-global me-2"></i>@(c.Language == "ru" ? "Русский" : "English")</span>
                             </div>
@@ -52,8 +52,8 @@
                                     <img class="rounded-circle" src="@(string.IsNullOrEmpty(c.Instructor.AvatarUrl) ? "/assets/img/user/user-29.jpg" : c.Instructor.AvatarUrl)" alt="">
                                 </span>
                                 <div class="ms-2">
-                                    <div class="fw-semibold">@c.Instructor.FullName</div>
-                                    <div class="fs-13 text-muted">Инструктор</div>
+                                    <a href="/instructors/@c.InstructorId" class="fw-semibold link-default">@c.Instructor.FullName</a>
+                                    <div class="fs-13 text-muted">@L["Course.Instructor"]</div>
                                 </div>
                             </div>
                         </div>
@@ -74,7 +74,7 @@
                 <div class="card mb-4">
                     <div class="card-body">
                         <div class="d-flex justify-content-between flex-wrap">
-                            <h5 class="subs-title mb-3">Программа курса</h5>
+                            <h5 class="subs-title mb-3">@L["Course.Program"]</h5>
                             <h6 class="fs-16 fw-medium text-gray-7 mb-3">
                                 @c.Sections.Count модулей · @Model.LessonsCount уроков
                             </h6>
@@ -131,32 +131,38 @@
 
                             @if (Model.IsOwner)
                             {
-                                <a href="/instructor/courses/@c.Id/edit" class="btn btn-primary w-100">Редактировать курс</a>
+                                <a href="/instructor/courses/@c.Id/edit" class="btn btn-primary w-100">@L["Course.EditCourse"]</a>
+                                <a href="/courses/@c.Slug/chat" class="btn btn-outline-primary w-100 mt-2">
+                                    <i class="isax isax-message me-1"></i>@L["Course.ChatLink"]
+                                </a>
                             }
                             else if (Model.IsEnrolled)
                             {
-                                <a href="/student/courses/@c.Slug" class="btn btn-primary w-100">Перейти к обучению</a>
+                                <a href="/student/courses/@c.Slug" class="btn btn-primary w-100">@L["Course.GoToLearning"]</a>
+                                <a href="/courses/@c.Slug/chat" class="btn btn-outline-primary w-100 mt-2">
+                                    <i class="isax isax-message me-1"></i>@L["Course.ChatLink"]
+                                </a>
                             }
                             else if (User?.Identity?.IsAuthenticated == true)
                             {
                                 <form method="post" action="/courses/@c.Slug/enroll" class="m-0">
                                     @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-primary w-100">Записаться на курс</button>
+                                    <button type="submit" class="btn btn-primary w-100">@L["Course.Enroll"]</button>
                                 </form>
                             }
                             else
                             {
-                                <a href="/account/login?returnUrl=/courses/@c.Slug" class="btn btn-primary w-100">Войти, чтобы записаться</a>
+                                <a href="/account/login?returnUrl=/courses/@c.Slug" class="btn btn-primary w-100">@L["Course.LoginToEnroll"]</a>
                             }
                         </div>
                     </div>
 
                     <div class="card">
                         <div class="card-body">
-                            <h5 class="subs-title mb-3">Включено в курс</h5>
-                            <p class="mb-2"><i class="isax isax-play-circle me-2 text-secondary"></i>@Model.LessonsCount видеоуроков</p>
-                            <p class="mb-2"><i class="isax isax-document me-2 text-secondary"></i>Текстовые материалы</p>
-                            <p class="mb-2"><i class="isax isax-clock me-2 text-secondary"></i>Доступ навсегда</p>
+                            <h5 class="subs-title mb-3">@L["Course.IncludedTitle"]</h5>
+                            <p class="mb-2"><i class="isax isax-play-circle me-2 text-secondary"></i>@Model.LessonsCount @L["Course.IncludedVideo"]</p>
+                            <p class="mb-2"><i class="isax isax-document me-2 text-secondary"></i>@L["Course.IncludedText"]</p>
+                            <p class="mb-2"><i class="isax isax-clock me-2 text-secondary"></i>@L["Course.IncludedForever"]</p>
                             <p class="mb-0"><i class="isax isax-medal me-2 text-secondary"></i>Сертификат при завершении</p>
                         </div>
                     </div>

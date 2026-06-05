@@ -1,0 +1,122 @@
+@model dreams.Models.Courses.TestListViewModel
+@{
+    ViewData["Title"] = $"Тесты: {Model.Course.Title}";
+    ViewData["DashboardArea"] = "instructor";
+    Layout = "_DashboardLayout";
+    var toast = TempData["Toast"] as string;
+}
+
+<div class="breadcrumb-bar text-center">
+    <div class="container">
+        <h2 class="breadcrumb-title mb-2">Тесты курса</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb justify-content-center mb-0">
+                <li class="breadcrumb-item"><a href="/">Главная</a></li>
+                <li class="breadcrumb-item"><a href="/instructor/courses">Мои курсы</a></li>
+                <li class="breadcrumb-item active">@Model.Course.Title</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container">
+
+        @if (!string.IsNullOrEmpty(toast))
+        {
+            <div class="alert alert-success">@toast</div>
+        }
+
+        @if (!Model.AllowsTests)
+        {
+            <div class="alert alert-warning d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div><i class="isax isax-info-circle me-1"></i>Тесты доступны на планах <b>Basic</b> и <b>Pro</b>.</div>
+                <a href="/instructor/subscription" class="btn btn-sm btn-primary">Сменить план</a>
+            </div>
+        }
+
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-2">
+            <div>
+                <h4 class="mb-1">@Model.Course.Title</h4>
+                <p class="text-muted mb-0">Управление тестами по урокам курса.</p>
+            </div>
+            <a href="/instructor/courses" class="btn btn-outline-secondary">
+                <i class="isax isax-arrow-left-2 me-1"></i>К списку курсов
+            </a>
+        </div>
+
+        @if (Model.Rows.Count == 0)
+        {
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="isax isax-clipboard fs-1 text-muted mb-3 d-block"></i>
+                    <h5>В курсе нет уроков</h5>
+                    <p class="text-muted mb-0">Добавьте уроки в курс, прежде чем создавать тесты.</p>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive card border-0 shadow-sm">
+                <table class="table mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Раздел</th>
+                            <th>Урок</th>
+                            <th>Тест</th>
+                            <th class="text-center">Вопросов</th>
+                            <th class="text-center">Проходной балл</th>
+                            <th class="text-end">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model.Rows)
+                        {
+                            <tr>
+                                <td class="text-muted">@r.SectionTitle</td>
+                                <td class="fw-semibold">@r.LessonTitle</td>
+                                <td>
+                                    @if (r.TestId.HasValue)
+                                    {
+                                        <span class="badge text-bg-success">@r.TestTitle</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+                                <td class="text-center">@(r.TestId.HasValue ? r.QuestionsCount.ToString() : "—")</td>
+                                <td class="text-center">@(r.PassingScore.HasValue ? $"{r.PassingScore}%" : "—")</td>
+                                <td class="text-end">
+                                    <div class="d-inline-flex gap-2">
+                                        @if (r.TestId.HasValue)
+                                        {
+                                            <a href="/instructor/lessons/@r.LessonId/test/edit"
+                                               class="btn btn-sm btn-outline-secondary @(Model.AllowsTests ? "" : "disabled")">
+                                                <i class="isax isax-edit me-1"></i>Редактировать
+                                            </a>
+                                            <form method="post" action="/instructor/lessons/@r.LessonId/test/delete" class="m-0"
+                                                  onsubmit="return confirm('Удалить тест и все попытки студентов?');">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="isax isax-trash"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <a href="/instructor/lessons/@r.LessonId/test/edit"
+                                               class="btn btn-sm btn-primary @(Model.AllowsTests ? "" : "disabled")">
+                                                <i class="isax isax-add me-1"></i>Создать тест
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</section>

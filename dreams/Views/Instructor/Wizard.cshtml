@@ -1,0 +1,531 @@
+@model dreams.Models.Courses.CourseWizardViewModel
+@using dreams.Models.Entities
+@{
+    ViewData["Title"] = "Мастер создания курса";
+    ViewData["DashboardArea"] = "instructor";
+    Layout = "_DashboardLayout";
+}
+
+@section Styles {
+    <style>
+        .stepper { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+        .step-pill {
+            flex: 1; min-width: 140px; padding: 14px 16px; border-radius: 12px;
+            background: #f5f6fb; border: 1px solid #e6e6f0; color: #6b7280;
+            font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 10px;
+            cursor: pointer; transition: all .2s;
+        }
+        .step-pill .n {
+            width: 28px; height: 28px; border-radius: 50%; background: #fff; color: #6b7280;
+            display: flex; align-items: center; justify-content: center; font-weight: 700;
+            border: 1px solid #d6d9e6;
+        }
+        .step-pill.done { background: #e9f7ef; border-color: #a3e0bc; color: #1e7e34; }
+        .step-pill.done .n { background: #2ea043; color: #fff; border-color: #2ea043; }
+        .step-pill.active { background: #4d44e0; border-color: #4d44e0; color: #fff; }
+        .step-pill.active .n { background: #fff; color: #4d44e0; border-color: #fff; }
+        .step-pane { display: none; }
+        .step-pane.active { display: block; }
+        .sec-card, .less-card, .q-card {
+            border: 1px solid #e6e6f0; border-radius: 12px; padding: 16px; margin-bottom: 14px; background: #fff;
+        }
+        .less-card { background: #fafbff; }
+        .opt-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+        .badge-num { background: #4d44e0; color: #fff; padding: 4px 10px; border-radius: 999px; font-weight: 600; font-size: 12px; }
+        .summary-list li { margin-bottom: 6px; }
+    </style>
+}
+
+<div class="breadcrumb-bar text-center">
+    <div class="container">
+        <h2 class="breadcrumb-title mb-2">Создание курса</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb justify-content-center mb-0">
+                <li class="breadcrumb-item"><a href="/instructor/courses">Мои курсы</a></li>
+                <li class="breadcrumb-item active">Мастер</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container">
+        <form method="post" action="/instructor/courses/wizard" id="wizForm">
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" style="@(ViewData.ModelState.IsValid ? "display:none" : "")"></div>
+
+            <div class="stepper" id="stepper">
+                <div class="step-pill active" data-step="1"><span class="n">1</span>Информация</div>
+                <div class="step-pill" data-step="2"><span class="n">2</span>Разделы</div>
+                <div class="step-pill" data-step="3"><span class="n">3</span>Уроки</div>
+                <div class="step-pill" data-step="4"><span class="n">4</span>Финальный тест</div>
+                <div class="step-pill" data-step="5"><span class="n">5</span>Публикация</div>
+            </div>
+
+            @* ---------- ШАГ 1 — ИНФО ---------- *@
+            <div class="step-pane active" data-step="1">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label">Название курса *</label>
+                                <input name="Title" value="@Model.Title" class="form-control" maxlength="160" required />
+                                <span asp-validation-for="Title" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Slug (URL)</label>
+                                <input name="Slug" value="@Model.Slug" class="form-control" placeholder="auto" maxlength="160" />
+                                <span asp-validation-for="Slug" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Категория *</label>
+                                <select name="CategoryId" class="form-select" required>
+                                    <option value="">— выберите —</option>
+                                    @foreach (var cat in Model.AvailableCategories)
+                                    {
+                                        <option value="@cat.Id" selected="@(cat.Id == Model.CategoryId)">@cat.Name</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="CategoryId" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Цена, ₽</label>
+                                <input name="Price" type="number" min="0" max="1000000" step="100" value="@Model.Price" class="form-control" />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Язык</label>
+                                <select name="Language" class="form-select">
+                                    <option value="ru" selected="@(Model.Language == "ru")">Русский</option>
+                                    <option value="en" selected="@(Model.Language == "en")">English</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Обложка (URL)</label>
+                                <input name="CoverUrl" value="@Model.CoverUrl" class="form-control" placeholder="https://… (по умолчанию заглушка)" />
+                                <span asp-validation-for="CoverUrl" class="text-danger small"></span>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Описание</label>
+                                <textarea name="Description" rows="4" class="form-control" maxlength="4000">@Model.Description</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* ---------- ШАГ 2 — РАЗДЕЛЫ ---------- *@
+            <div class="step-pane" data-step="2">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <p class="text-muted">Разделы помогают сгруппировать уроки по темам.</p>
+                        <div id="sectionsBox">
+                            @for (int i = 0; i < Model.Sections.Count; i++)
+                            {
+                                <div class="sec-card" data-sec="@i">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge-num sec-num">@(i + 1)</span>
+                                        <input name="Sections[@i].Title" value="@Model.Sections[i].Title" class="form-control" placeholder="Название раздела" />
+                                        <button type="button" class="btn btn-outline-danger btn-sm btn-del-sec"><i class="isax isax-trash"></i></button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <button type="button" id="btnAddSec" class="btn btn-outline-primary btn-sm mt-2">
+                            <i class="isax isax-add me-1"></i>Добавить раздел
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            @* ---------- ШАГ 3 — УРОКИ ---------- *@
+            <div class="step-pane" data-step="3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <p class="text-muted">Добавьте уроки в каждый раздел. Минимум один урок в разделе.</p>
+                        <div id="lessonsBox">
+                            @for (int i = 0; i < Model.Sections.Count; i++)
+                            {
+                                var s = Model.Sections[i];
+                                <div class="sec-card" data-sec="@i">
+                                    <div class="fw-semibold mb-2"><span class="badge-num me-2 sec-num">@(i + 1)</span><span class="sec-title-label">@s.Title</span></div>
+                                    <div class="lessons">
+                                        @for (int j = 0; j < s.Lessons.Count; j++)
+                                        {
+                                            var l = s.Lessons[j];
+                                            <div class="less-card" data-les="@j">
+                                                <div class="row g-2 align-items-center">
+                                                    <div class="col-md-4">
+                                                        <input name="Sections[@i].Lessons[@j].Title" value="@l.Title" class="form-control" placeholder="Название урока" />
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <input name="Sections[@i].Lessons[@j].VideoUrl" value="@l.VideoUrl" class="form-control" placeholder="Видео URL (опц.)" />
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <input name="Sections[@i].Lessons[@j].TextContent" value="@l.TextContent" class="form-control" placeholder="Краткое описание" />
+                                                    </div>
+                                                    <div class="col-md-1 text-end">
+                                                        <button type="button" class="btn btn-outline-secondary btn-sm btn-del-les"><i class="isax isax-close-circle"></i></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-primary btn-add-les mt-1">
+                                        <i class="isax isax-add me-1"></i>Урок
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* ---------- ШАГ 4 — ФИНАЛЬНЫЙ ТЕСТ ---------- *@
+            <div class="step-pane" data-step="4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        @if (!Model.AllowsTests)
+                        {
+                            <div class="alert alert-warning">
+                                <i class="isax isax-info-circle me-1"></i>Финальный тест доступен на планах <b>Basic</b> и <b>Pro</b>. Сейчас этот шаг можно пропустить.
+                            </div>
+                        }
+
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="includeFT" name="IncludeFinalTest" value="true" @(Model.IncludeFinalTest ? "checked" : "") @(Model.AllowsTests ? "" : "disabled") />
+                            <input type="hidden" name="IncludeFinalTest" value="false" />
+                            <label class="form-check-label" for="includeFT">Добавить финальный тест к последнему уроку</label>
+                        </div>
+
+                        <div id="ftBlock" style="@(Model.IncludeFinalTest ? "" : "display:none")">
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-8">
+                                    <label class="form-label">Название теста</label>
+                                    <input name="FinalTestTitle" value="@Model.FinalTestTitle" class="form-control" placeholder="Финальный тест курса" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Проходной балл, %</label>
+                                    <input name="FinalTestPassingScore" type="number" min="1" max="100" value="@Model.FinalTestPassingScore" class="form-control" />
+                                </div>
+                            </div>
+
+                            <div id="ftQuestions">
+                                @for (int i = 0; i < Model.FinalTestQuestions.Count; i++)
+                                {
+                                    var q = Model.FinalTestQuestions[i];
+                                    <div class="q-card" data-q="@i">
+                                        <div class="d-flex gap-2 align-items-center mb-2">
+                                            <span class="badge-num q-num">@(i + 1)</span>
+                                            <input name="FinalTestQuestions[@i].Text" value="@q.Text" class="form-control" placeholder="Текст вопроса" />
+                                            <select name="FinalTestQuestions[@i].Type" class="form-select" style="max-width:220px">
+                                                <option value="@((int)QuestionType.SingleChoice)" selected="@(q.Type == QuestionType.SingleChoice)">Один вариант</option>
+                                                <option value="@((int)QuestionType.MultipleChoice)" selected="@(q.Type == QuestionType.MultipleChoice)">Несколько вариантов</option>
+                                            </select>
+                                            <button type="button" class="btn btn-outline-danger btn-sm btn-del-q"><i class="isax isax-trash"></i></button>
+                                        </div>
+                                        <div class="options">
+                                            @for (int j = 0; j < q.Options.Count; j++)
+                                            {
+                                                var o = q.Options[j];
+                                                <div class="opt-row" data-o="@j">
+                                                    <div class="form-check m-0">
+                                                        <input class="form-check-input" type="checkbox" name="FinalTestQuestions[@i].Options[@j].IsCorrect" value="true" @(o.IsCorrect ? "checked" : "") />
+                                                        <input type="hidden" name="FinalTestQuestions[@i].Options[@j].IsCorrect" value="false" />
+                                                    </div>
+                                                    <input name="FinalTestQuestions[@i].Options[@j].Text" value="@o.Text" class="form-control" placeholder="Вариант ответа" />
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm btn-del-o"><i class="isax isax-close-circle"></i></button>
+                                                </div>
+                                            }
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-primary btn-add-o mt-1">
+                                            <i class="isax isax-add me-1"></i>Вариант
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                            <button type="button" id="btnAddQ" class="btn btn-outline-primary btn-sm">
+                                <i class="isax isax-add me-1"></i>Вопрос
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* ---------- ШАГ 5 — ПУБЛИКАЦИЯ ---------- *@
+            <div class="step-pane" data-step="5">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="mb-3">Обзор курса</h5>
+                        <ul class="summary-list" id="summary"></ul>
+
+                        <hr/>
+
+                        <div class="form-check form-switch mt-3">
+                            <input class="form-check-input" type="checkbox" id="isPub" name="IsPublished" value="true" @(Model.IsPublished ? "checked" : "") />
+                            <input type="hidden" name="IsPublished" value="false" />
+                            <label class="form-check-label" for="isPub">Опубликовать курс сразу</label>
+                        </div>
+                        <p class="text-muted small mt-2">Можно не публиковать, а вернуться к редактированию позже из списка курсов.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+                <button type="button" class="btn btn-outline-secondary" id="btnPrev">
+                    <i class="isax isax-arrow-left-2 me-1"></i>Назад
+                </button>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-primary" id="btnNext">
+                        Далее<i class="isax isax-arrow-right-3 ms-1"></i>
+                    </button>
+                    <button type="submit" class="btn btn-success" id="btnFinish" style="display:none">
+                        <i class="isax isax-tick-circle me-1"></i>Создать курс
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        (function () {
+            const TOTAL = 5;
+            let cur = 1;
+
+            const stepper = document.getElementById('stepper');
+            const btnPrev = document.getElementById('btnPrev');
+            const btnNext = document.getElementById('btnNext');
+            const btnFinish = document.getElementById('btnFinish');
+
+            function show(step) {
+                cur = step;
+                document.querySelectorAll('.step-pane').forEach(p => p.classList.toggle('active', +p.dataset.step === step));
+                document.querySelectorAll('.step-pill').forEach(p => {
+                    const n = +p.dataset.step;
+                    p.classList.toggle('active', n === step);
+                    p.classList.toggle('done', n < step);
+                });
+                btnPrev.disabled = step === 1;
+                btnNext.style.display = step === TOTAL ? 'none' : '';
+                btnFinish.style.display = step === TOTAL ? '' : 'none';
+                if (step === 3) syncLessonsFromSections();
+                if (step === 5) buildSummary();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+            stepper.addEventListener('click', e => {
+                const p = e.target.closest('.step-pill'); if (!p) return; show(+p.dataset.step);
+            });
+            btnPrev.addEventListener('click', () => show(Math.max(1, cur - 1)));
+            btnNext.addEventListener('click', () => { if (validateStep(cur)) show(Math.min(TOTAL, cur + 1)); });
+
+            function validateStep(step) {
+                if (step === 1) {
+                    const title = document.querySelector('[name=Title]');
+                    const cat = document.querySelector('[name=CategoryId]');
+                    if (!title.value.trim()) { alert('Введите название курса'); title.focus(); return false; }
+                    if (!cat.value) { alert('Выберите категорию'); cat.focus(); return false; }
+                }
+                if (step === 2) {
+                    const titles = [...document.querySelectorAll('#sectionsBox [name$=".Title"]')].map(i => i.value.trim()).filter(Boolean);
+                    if (titles.length === 0) { alert('Добавьте хотя бы один раздел'); return false; }
+                }
+                if (step === 3) {
+                    const hasAny = [...document.querySelectorAll('#lessonsBox .less-card [name$=".Title"]')].some(i => i.value.trim());
+                    if (!hasAny) { alert('Добавьте хотя бы один урок'); return false; }
+                }
+                return true;
+            }
+
+            // --- Sections (шаг 2) ---
+            const secBox = document.getElementById('sectionsBox');
+            document.getElementById('btnAddSec').addEventListener('click', () => {
+                const i = secBox.querySelectorAll('.sec-card').length;
+                const div = document.createElement('div');
+                div.className = 'sec-card'; div.dataset.sec = i;
+                div.innerHTML =
+                    '<div class="d-flex align-items-center gap-2">' +
+                    '<span class="badge-num sec-num">' + (i + 1) + '</span>' +
+                    '<input name="Sections[' + i + '].Title" class="form-control" placeholder="Название раздела" />' +
+                    '<button type="button" class="btn btn-outline-danger btn-sm btn-del-sec"><i class="isax isax-trash"></i></button>' +
+                    '</div>';
+                secBox.appendChild(div);
+            });
+            secBox.addEventListener('click', e => {
+                const del = e.target.closest('.btn-del-sec');
+                if (del) {
+                    if (!confirm('Удалить раздел?')) return;
+                    del.closest('.sec-card').remove();
+                    renumberSections();
+                }
+            });
+            function renumberSections() {
+                secBox.querySelectorAll('.sec-card').forEach((el, i) => {
+                    el.dataset.sec = i;
+                    el.querySelector('.sec-num').textContent = i + 1;
+                    el.querySelectorAll('[name]').forEach(inp => {
+                        inp.name = inp.name.replace(/^Sections\[\d+\]/, 'Sections[' + i + ']');
+                    });
+                });
+            }
+
+            // --- Lessons (шаг 3) — синхронизируем секции в lessonsBox при заходе ---
+            const lesBox = document.getElementById('lessonsBox');
+            function syncLessonsFromSections() {
+                const sections = [...secBox.querySelectorAll('.sec-card')];
+                // строим карту: оставляем существующие карточки lessonsBox с теми же индексами
+                const existing = {};
+                lesBox.querySelectorAll('.sec-card').forEach(c => { existing[c.dataset.sec] = c; });
+                lesBox.innerHTML = '';
+                sections.forEach((sc, i) => {
+                    const title = sc.querySelector('[name$=".Title"]').value.trim() || ('Раздел ' + (i + 1));
+                    let card = existing[i];
+                    if (card) {
+                        // обновим заголовок и переиндексируем имена в уроках
+                        card.dataset.sec = i;
+                        card.querySelector('.sec-num').textContent = i + 1;
+                        card.querySelector('.sec-title-label').textContent = title;
+                        card.querySelectorAll('[name]').forEach(inp => {
+                            inp.name = inp.name.replace(/^Sections\[\d+\]/, 'Sections[' + i + ']');
+                        });
+                    } else {
+                        card = document.createElement('div');
+                        card.className = 'sec-card'; card.dataset.sec = i;
+                        card.innerHTML =
+                            '<div class="fw-semibold mb-2"><span class="badge-num me-2 sec-num">' + (i + 1) + '</span><span class="sec-title-label">' + title + '</span></div>' +
+                            '<div class="lessons"></div>' +
+                            '<button type="button" class="btn btn-sm btn-outline-primary btn-add-les mt-1"><i class="isax isax-add me-1"></i>Урок</button>';
+                    }
+                    lesBox.appendChild(card);
+                });
+            }
+            lesBox.addEventListener('click', e => {
+                const addL = e.target.closest('.btn-add-les');
+                if (addL) {
+                    const card = addL.closest('.sec-card');
+                    const i = +card.dataset.sec;
+                    const lessons = card.querySelector('.lessons');
+                    const j = lessons.querySelectorAll('.less-card').length;
+                    const div = document.createElement('div');
+                    div.className = 'less-card'; div.dataset.les = j;
+                    div.innerHTML =
+                        '<div class="row g-2 align-items-center">' +
+                        '<div class="col-md-4"><input name="Sections[' + i + '].Lessons[' + j + '].Title" class="form-control" placeholder="Название урока" /></div>' +
+                        '<div class="col-md-4"><input name="Sections[' + i + '].Lessons[' + j + '].VideoUrl" class="form-control" placeholder="Видео URL (опц.)" /></div>' +
+                        '<div class="col-md-3"><input name="Sections[' + i + '].Lessons[' + j + '].TextContent" class="form-control" placeholder="Краткое описание" /></div>' +
+                        '<div class="col-md-1 text-end"><button type="button" class="btn btn-outline-secondary btn-sm btn-del-les"><i class="isax isax-close-circle"></i></button></div>' +
+                        '</div>';
+                    lessons.appendChild(div);
+                    return;
+                }
+                const delL = e.target.closest('.btn-del-les');
+                if (delL) {
+                    const card = delL.closest('.sec-card');
+                    delL.closest('.less-card').remove();
+                    renumberLessons(card);
+                }
+            });
+            function renumberLessons(card) {
+                const i = +card.dataset.sec;
+                card.querySelectorAll('.less-card').forEach((el, j) => {
+                    el.dataset.les = j;
+                    el.querySelectorAll('[name]').forEach(inp => {
+                        inp.name = inp.name.replace(/Lessons\[\d+\]/, 'Lessons[' + j + ']');
+                    });
+                });
+            }
+
+            // --- Финальный тест (шаг 4) ---
+            const includeFT = document.getElementById('includeFT');
+            const ftBlock = document.getElementById('ftBlock');
+            includeFT.addEventListener('change', () => ftBlock.style.display = includeFT.checked ? '' : 'none');
+            const ftQ = document.getElementById('ftQuestions');
+            document.getElementById('btnAddQ').addEventListener('click', () => {
+                const i = ftQ.querySelectorAll('.q-card').length;
+                const div = document.createElement('div');
+                div.className = 'q-card'; div.dataset.q = i;
+                div.innerHTML =
+                    '<div class="d-flex gap-2 align-items-center mb-2">' +
+                    '<span class="badge-num q-num">' + (i + 1) + '</span>' +
+                    '<input name="FinalTestQuestions[' + i + '].Text" class="form-control" placeholder="Текст вопроса" />' +
+                    '<select name="FinalTestQuestions[' + i + '].Type" class="form-select" style="max-width:220px">' +
+                    '<option value="0">Один вариант</option><option value="1">Несколько вариантов</option></select>' +
+                    '<button type="button" class="btn btn-outline-danger btn-sm btn-del-q"><i class="isax isax-trash"></i></button>' +
+                    '</div>' +
+                    '<div class="options">' +
+                    optHtml(i, 0, true) + optHtml(i, 1, false) +
+                    '</div>' +
+                    '<button type="button" class="btn btn-sm btn-outline-primary btn-add-o mt-1"><i class="isax isax-add me-1"></i>Вариант</button>';
+                ftQ.appendChild(div);
+            });
+            function optHtml(qi, oi, correct) {
+                return '<div class="opt-row" data-o="' + oi + '">' +
+                    '<div class="form-check m-0">' +
+                    '<input class="form-check-input" type="checkbox" name="FinalTestQuestions[' + qi + '].Options[' + oi + '].IsCorrect" value="true"' + (correct ? ' checked' : '') + ' />' +
+                    '<input type="hidden" name="FinalTestQuestions[' + qi + '].Options[' + oi + '].IsCorrect" value="false" />' +
+                    '</div>' +
+                    '<input name="FinalTestQuestions[' + qi + '].Options[' + oi + '].Text" class="form-control" placeholder="Вариант ответа" />' +
+                    '<button type="button" class="btn btn-outline-secondary btn-sm btn-del-o"><i class="isax isax-close-circle"></i></button>' +
+                    '</div>';
+            }
+            ftQ.addEventListener('click', e => {
+                const dq = e.target.closest('.btn-del-q');
+                if (dq) { if (!confirm('Удалить вопрос?')) return; dq.closest('.q-card').remove(); renumberQuestions(); return; }
+                const dO = e.target.closest('.btn-del-o');
+                if (dO) { dO.closest('.opt-row').remove(); renumberOptions(dO.closest('.q-card')); return; }
+                const aO = e.target.closest('.btn-add-o');
+                if (aO) {
+                    const card = aO.closest('.q-card');
+                    const qi = +card.dataset.q;
+                    const opts = card.querySelector('.options');
+                    const oi = opts.querySelectorAll('.opt-row').length;
+                    opts.insertAdjacentHTML('beforeend', optHtml(qi, oi, false));
+                }
+            });
+            ftQ.addEventListener('change', e => {
+                const cb = e.target;
+                if (cb.type !== 'checkbox' || !cb.checked || !/IsCorrect$/.test(cb.name)) return;
+                const card = cb.closest('.q-card');
+                const sel = card.querySelector('select[name$=".Type"]');
+                if (sel && sel.value === '0') {
+                    card.querySelectorAll('input[type=checkbox][name$=".IsCorrect"]').forEach(o => { if (o !== cb) o.checked = false; });
+                }
+            });
+            function renumberQuestions() {
+                ftQ.querySelectorAll('.q-card').forEach((c, i) => {
+                    c.dataset.q = i;
+                    c.querySelector('.q-num').textContent = i + 1;
+                    c.querySelectorAll('[name]').forEach(el => { el.name = el.name.replace(/^FinalTestQuestions\[\d+\]/, 'FinalTestQuestions[' + i + ']'); });
+                });
+            }
+            function renumberOptions(card) {
+                card.querySelectorAll('.opt-row').forEach((o, j) => {
+                    o.dataset.o = j;
+                    o.querySelectorAll('[name]').forEach(el => { el.name = el.name.replace(/Options\[\d+\]/, 'Options[' + j + ']'); });
+                });
+            }
+
+            // --- Обзор (шаг 5) ---
+            function buildSummary() {
+                const ul = document.getElementById('summary'); ul.innerHTML = '';
+                const title = document.querySelector('[name=Title]').value.trim() || '(без названия)';
+                const cat = document.querySelector('[name=CategoryId] option:checked')?.textContent || '—';
+                const price = document.querySelector('[name=Price]').value || 0;
+                const secCount = lesBox.querySelectorAll('.sec-card').length;
+                let lessonCount = 0;
+                lesBox.querySelectorAll('.less-card [name$=".Title"]').forEach(i => { if (i.value.trim()) lessonCount++; });
+                const hasFT = includeFT.checked;
+                const qCount = ftQ.querySelectorAll('.q-card').length;
+
+                const li = (k, v) => { const e = document.createElement('li'); e.innerHTML = '<b>' + k + ':</b> ' + v; ul.appendChild(e); };
+                li('Название', title);
+                li('Категория', cat);
+                li('Цена', price == 0 ? 'Бесплатно' : (price + ' ₽'));
+                li('Разделов', secCount);
+                li('Уроков', lessonCount);
+                li('Финальный тест', hasFT ? ('да, ' + qCount + ' вопр.') : 'нет');
+            }
+        })();
+    </script>
+}

@@ -1,0 +1,214 @@
+@model dreams.Models.Courses.TestFormViewModel
+@using dreams.Models.Entities
+@{
+    ViewData["Title"] = Model.TestId.HasValue ? "Редактирование теста" : "Новый тест";
+    ViewData["DashboardArea"] = "instructor";
+    Layout = "_DashboardLayout";
+}
+
+@section Styles {
+    <style>
+        .q-card { border: 1px solid #e6e6f0; border-radius: 12px; padding: 16px; margin-bottom: 16px; background: #fff; }
+        .q-card .q-head { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+        .opt-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+        .opt-row .form-check { margin: 0; }
+        .badge-num { background: #4d44e0; color: #fff; padding: 4px 10px; border-radius: 999px; font-weight: 600; font-size: 12px; }
+    </style>
+}
+
+<div class="breadcrumb-bar text-center">
+    <div class="container">
+        <h2 class="breadcrumb-title mb-2">@(Model.TestId.HasValue ? "Редактирование теста" : "Новый тест")</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb justify-content-center mb-0">
+                <li class="breadcrumb-item"><a href="/instructor/courses">Мои курсы</a></li>
+                <li class="breadcrumb-item"><a href="/instructor/courses/@Model.CourseId/tests">@Model.CourseTitle</a></li>
+                <li class="breadcrumb-item active">@Model.LessonTitle</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container">
+        <form method="post" action="/instructor/lessons/@Model.LessonId/test/edit" id="testForm">
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" style="@(ViewData.ModelState.IsValid ? "display:none" : "")"></div>
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Название теста</label>
+                            <input name="Title" value="@Model.Title" class="form-control" maxlength="200" required />
+                            <span asp-validation-for="Title" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Проходной балл, %</label>
+                            <input name="PassingScore" type="number" min="1" max="100" value="@Model.PassingScore" class="form-control" required />
+                            <span asp-validation-for="PassingScore" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="questions">
+                @for (int i = 0; i < Model.Questions.Count; i++)
+                {
+                    var q = Model.Questions[i];
+                    <div class="q-card" data-q-index="@i">
+                        <div class="q-head">
+                            <span class="badge-num q-num">@(i + 1)</span>
+                            <input name="Questions[@i].Text" value="@q.Text" class="form-control" placeholder="Текст вопроса" />
+                            <select name="Questions[@i].Type" class="form-select" style="max-width: 220px;">
+                                <option value="@((int)QuestionType.SingleChoice)" selected="@(q.Type == QuestionType.SingleChoice)">Один вариант</option>
+                                <option value="@((int)QuestionType.MultipleChoice)" selected="@(q.Type == QuestionType.MultipleChoice)">Несколько вариантов</option>
+                            </select>
+                            <button type="button" class="btn btn-outline-danger btn-sm btn-del-q" title="Удалить вопрос">
+                                <i class="isax isax-trash"></i>
+                            </button>
+                        </div>
+
+                        <div class="options">
+                            @for (int j = 0; j < q.Options.Count; j++)
+                            {
+                                var o = q.Options[j];
+                                <div class="opt-row" data-o-index="@j">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="Questions[@i].Options[@j].IsCorrect" value="true" @(o.IsCorrect ? "checked" : "") />
+                                        <input type="hidden" name="Questions[@i].Options[@j].IsCorrect" value="false" />
+                                    </div>
+                                    <input name="Questions[@i].Options[@j].Text" value="@o.Text" class="form-control" placeholder="Вариант ответа" />
+                                    <button type="button" class="btn btn-outline-secondary btn-sm btn-del-o"><i class="isax isax-close-circle"></i></button>
+                                </div>
+                            }
+                        </div>
+
+                        <button type="button" class="btn btn-sm btn-outline-primary btn-add-o mt-2">
+                            <i class="isax isax-add me-1"></i>Вариант
+                        </button>
+                    </div>
+                }
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                <button type="button" id="btnAddQ" class="btn btn-outline-primary">
+                    <i class="isax isax-add me-1"></i>Добавить вопрос
+                </button>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="isax isax-tick-circle me-1"></i>Сохранить тест
+                </button>
+                <a href="/instructor/courses/@Model.CourseId/tests" class="btn btn-outline-secondary">Отмена</a>
+            </div>
+        </form>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        (function () {
+            const qBox = document.getElementById('questions');
+
+            function renumber() {
+                const qs = qBox.querySelectorAll('.q-card');
+                qs.forEach((q, i) => {
+                    q.dataset.qIndex = i;
+                    q.querySelector('.q-num').textContent = (i + 1);
+                    q.querySelectorAll('[name]').forEach(el => {
+                        el.name = el.name.replace(/^Questions\[\d+\]/, 'Questions[' + i + ']');
+                    });
+                    const opts = q.querySelectorAll('.opt-row');
+                    opts.forEach((o, j) => {
+                        o.dataset.oIndex = j;
+                        o.querySelectorAll('[name]').forEach(el => {
+                            el.name = el.name.replace(/Options\[\d+\]/, 'Options[' + j + ']');
+                        });
+                    });
+                });
+            }
+
+            function makeOption(qIndex, oIndex, text, isCorrect) {
+                const div = document.createElement('div');
+                div.className = 'opt-row';
+                div.dataset.oIndex = oIndex;
+                div.innerHTML =
+                    '<div class="form-check">' +
+                    '<input class="form-check-input" type="checkbox" name="Questions[' + qIndex + '].Options[' + oIndex + '].IsCorrect" value="true"' + (isCorrect ? ' checked' : '') + ' />' +
+                    '<input type="hidden" name="Questions[' + qIndex + '].Options[' + oIndex + '].IsCorrect" value="false" />' +
+                    '</div>' +
+                    '<input name="Questions[' + qIndex + '].Options[' + oIndex + '].Text" value="' + (text || '') + '" class="form-control" placeholder="Вариант ответа" />' +
+                    '<button type="button" class="btn btn-outline-secondary btn-sm btn-del-o"><i class="isax isax-close-circle"></i></button>';
+                return div;
+            }
+
+            function makeQuestion(qIndex) {
+                const card = document.createElement('div');
+                card.className = 'q-card';
+                card.dataset.qIndex = qIndex;
+                card.innerHTML =
+                    '<div class="q-head">' +
+                    '  <span class="badge-num q-num">' + (qIndex + 1) + '</span>' +
+                    '  <input name="Questions[' + qIndex + '].Text" class="form-control" placeholder="Текст вопроса" />' +
+                    '  <select name="Questions[' + qIndex + '].Type" class="form-select" style="max-width: 220px;">' +
+                    '    <option value="0">Один вариант</option>' +
+                    '    <option value="1">Несколько вариантов</option>' +
+                    '  </select>' +
+                    '  <button type="button" class="btn btn-outline-danger btn-sm btn-del-q"><i class="isax isax-trash"></i></button>' +
+                    '</div>' +
+                    '<div class="options"></div>' +
+                    '<button type="button" class="btn btn-sm btn-outline-primary btn-add-o mt-2"><i class="isax isax-add me-1"></i>Вариант</button>';
+                const opts = card.querySelector('.options');
+                opts.appendChild(makeOption(qIndex, 0, '', true));
+                opts.appendChild(makeOption(qIndex, 1, '', false));
+                return card;
+            }
+
+            document.getElementById('btnAddQ').addEventListener('click', function () {
+                const i = qBox.querySelectorAll('.q-card').length;
+                qBox.appendChild(makeQuestion(i));
+            });
+
+            qBox.addEventListener('click', function (e) {
+                const delQ = e.target.closest('.btn-del-q');
+                if (delQ) {
+                    if (!confirm('Удалить вопрос?')) return;
+                    delQ.closest('.q-card').remove();
+                    renumber();
+                    return;
+                }
+                const delO = e.target.closest('.btn-del-o');
+                if (delO) {
+                    delO.closest('.opt-row').remove();
+                    renumber();
+                    return;
+                }
+                const addO = e.target.closest('.btn-add-o');
+                if (addO) {
+                    const card = addO.closest('.q-card');
+                    const qi = parseInt(card.dataset.qIndex, 10);
+                    const oi = card.querySelectorAll('.opt-row').length;
+                    card.querySelector('.options').appendChild(makeOption(qi, oi, '', false));
+                    return;
+                }
+            });
+
+            // SingleChoice — клик по чекбоксу снимает остальные в том же вопросе
+            qBox.addEventListener('change', function (e) {
+                const cb = e.target;
+                if (cb.type !== 'checkbox' || !cb.checked) return;
+                if (!/IsCorrect$/.test(cb.name)) return;
+                const card = cb.closest('.q-card');
+                const sel = card.querySelector('select[name$=".Type"]');
+                if (sel && sel.value === '0') {
+                    card.querySelectorAll('input[type=checkbox][name$=".IsCorrect"]').forEach(other => {
+                        if (other !== cb) other.checked = false;
+                    });
+                }
+            });
+        })();
+    </script>
+}

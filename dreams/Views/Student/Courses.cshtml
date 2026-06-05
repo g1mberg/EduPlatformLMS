@@ -1,13 +1,13 @@
 @model IReadOnlyList<dreams.Models.Entities.Enrollment>
 @{
-    ViewData["Title"] = "Мои курсы";
+    ViewData["Title"] = L["Student.MyCoursesTitle"].Value;
     ViewData["DashboardArea"] = "student";
     Layout = "_DashboardLayout";
 }
 
 <div class="breadcrumb-bar text-center">
     <div class="container">
-        <h2 class="breadcrumb-title mb-2">Мои курсы</h2>
+        <h2 class="breadcrumb-title mb-2">@L["Student.MyCoursesTitle"]</h2>
     </div>
 </div>
 
@@ -18,9 +18,8 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-body text-center py-5">
                     <i class="isax isax-book fs-1 text-muted mb-3 d-block"></i>
-                    <h5>Вы ещё не записаны ни на один курс</h5>
-                    <p class="text-muted">Загляните в каталог и выберите интересный курс.</p>
-                    <a href="/courses" class="btn btn-secondary mt-2">Открыть каталог</a>
+                    <h5>@L["Student.NoCoursesYet"]</h5>
+                    <a href="/courses" class="btn btn-secondary mt-2">@L["Student.BrowseCatalog"]</a>
                 </div>
             </div>
         }
@@ -43,7 +42,7 @@
                                 <p class="text-muted fs-13 mb-2">@c.Instructor.FullName</p>
 
                                 <div class="d-flex justify-content-between fs-13 mb-1">
-                                    <span>Прогресс</span>
+                                    <span>@L["Student.Progress"]</span>
                                     <span class="fw-semibold">@e.ProgressPercent.ToString("0.#")%</span>
                                 </div>
                                 <div class="progress mb-3" style="height: 6px;">
@@ -53,7 +52,7 @@
                                 </div>
 
                                 <a href="/student/courses/@c.Slug" class="btn btn-dark btn-sm w-100">
-                                    @(e.ProgressPercent == 0 ? "Начать обучение" : (e.CompletedAt != null ? "Курс пройден" : "Продолжить"))
+                                    @(e.ProgressPercent == 0 ? L["Student.GoToCourse"].Value : (e.CompletedAt != null ? L["Student.CompletedLabel"].Value : L["Common.Continue"].Value))
                                 </a>
                             </div>
                         </div>

@@ -32,7 +32,123 @@ public class InstructorController : Controller
 
     [AllowAnonymous]
     [HttpGet("subscription")]
-    public IActionResult Subscription() => View("/Views/Subscription/Index.cshtml");
+    public async Task<IActionResult> Subscription()
+    {
+        var plans = await _db.SubscriptionPlans.OrderBy(p => p.Id).ToListAsync();
+        var isAuth = User?.Identity?.IsAuthenticated == true;
+
+        decimal credits = 0;
+        SubscriptionPlanCode? activeCode = null;
+        DateTime? activeExpires = null;
+
+        if (isAuth)
+        {
+            var userId = GetUserId();
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            credits = user?.Credits ?? 0m;
+
+            var active = await _db.InstructorSubscriptions
+                .Include(s => s.Plan)
+                .Where(s => s.InstructorId == userId && s.IsActive &&
+                            (s.ExpiresAt == null || s.ExpiresAt > DateTime.UtcNow))
+                .OrderByDescending(s => s.StartedAt)
+                .FirstOrDefaultAsync();
+            activeCode = active?.Plan.Code;
+            activeExpires = active?.ExpiresAt;
+        }
+
+        var vm = new SubscriptionPageViewModel
+        {
+            Plans = plans,
+            IsAuthenticated = isAuth,
+            Credits = credits,
+            ActivePlanCode = activeCode,
+            ActiveExpiresAt = activeExpires
+        };
+        return View("/Views/Subscription/Index.cshtml", vm);
+    }
+
+    [HttpPost("subscription/buy/{planId:int}")]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> BuySubscription(int planId)
+    {
+        if (User?.Identity?.IsAuthenticated != true)
+            return Redirect("/account/login?returnUrl=/instructor/subscription");
+
+        var plan = await _db.SubscriptionPlans.FindAsync(planId);
+        if (plan is null) return NotFound();
+
+        var userId = GetUserId();
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user is null) return Challenge();
+
+        // Проверка баланса
+        if (user.Credits < plan.PriceCredits)
+        {
+            TempData["Toast"] = $"Недостаточно кредитов. Нужно {plan.PriceCredits:N0}, у вас {user.Credits:N0}.";
+            return RedirectToAction(nameof(Subscription));
+        }
+
+        // Деактивируем предыдущие активные подписки
+        var oldActive = await _db.InstructorSubscriptions
+            .Where(s => s.InstructorId == userId && s.IsActive)
+            .ToListAsync();
+        foreach (var s in oldActive)
+        {
+            s.IsActive = false;
+            s.ExpiresAt = DateTime.UtcNow;
+        }
+
+        // Списываем кредиты + транзакция
+        if (plan.PriceCredits > 0)
+        {
+            user.Credits -= plan.PriceCredits;
+            await _userManager.UpdateAsync(user);
+
+            _db.Transactions.Add(new Transaction
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Amount = -plan.PriceCredits,
+                Type = TransactionType.SubscriptionPayment,
+                CreatedAt = DateTime.UtcNow,
+                Description = $"Подписка {plan.Code} на 30 дней"
+            });
+        }
+
+        // Активируем подписку
+        var sub = new InstructorSubscription
+        {
+            Id = Guid.NewGuid(),
+            InstructorId = userId,
+            PlanId = plan.Id,
+            StartedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddDays(30),
+            IsActive = true
+        };
+        _db.InstructorSubscriptions.Add(sub);
+
+        // Добавим роль Instructor если у юзера её ещё нет
+        if (!await _userManager.IsInRoleAsync(user, "Instructor"))
+            await _userManager.AddToRoleAsync(user, "Instructor");
+
+        // Notification
+        _db.Notifications.Add(new Notification
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Title = "Подписка активирована",
+            Message = $"План {plan.Code} активирован до {sub.ExpiresAt:dd.MM.yyyy}.",
+            CreatedAt = DateTime.UtcNow
+        });
+
+        await _db.SaveChangesAsync();
+        await _audit.LogAsync("subscription.buy", "SubscriptionPlan", plan.Id.ToString(), $"{plan.Code}, -{plan.PriceCredits} cr");
+
+        TempData["Toast"] = $"План {plan.Code} активирован до {sub.ExpiresAt:dd.MM.yyyy}.";
+        return RedirectToAction(nameof(Subscription));
+    }
 
     // ---------- Список курсов инструктора ----------
 
@@ -113,6 +229,207 @@ public class InstructorController : Controller
         await _audit.LogAsync("course.create", "Course", course.Id.ToString(), course.Title);
 
         TempData["Toast"] = $"Курс «{course.Title}» создан";
+        return RedirectToAction(nameof(Courses));
+    }
+
+    // ---------- Wizard (5 шагов) ----------
+
+    [HttpGet("courses/wizard")]
+    public async Task<IActionResult> Wizard()
+    {
+        var userId = GetUserId();
+        var (used, limit) = await GetCourseLimitAsync(userId);
+        if (limit is not null && used >= limit)
+        {
+            TempData["LimitError"] = $"Достигнут лимит курсов ({used}/{limit}). Обновите план.";
+            return RedirectToAction(nameof(Courses));
+        }
+
+        var vm = new CourseWizardViewModel
+        {
+            AvailableCategories = await _db.Categories.OrderBy(c => c.Name).ToListAsync(),
+            AllowsTests = await CurrentPlanAllowsTestsAsync(userId),
+            Sections = new List<WizardSection>
+            {
+                new() { Title = "Введение", Lessons = new List<WizardLesson> { new() { Title = "Добро пожаловать" } } }
+            }
+        };
+        return View(vm);
+    }
+
+    [HttpPost("courses/wizard")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Wizard(CourseWizardViewModel vm)
+    {
+        var userId = GetUserId();
+
+        var (used, limit) = await GetCourseLimitAsync(userId);
+        if (limit is not null && used >= limit)
+        {
+            ModelState.AddModelError(string.Empty, $"Достигнут лимит курсов ({used}/{limit}).");
+        }
+
+        // Slug-валидация (как в обычной форме)
+        if (string.IsNullOrWhiteSpace(vm.Slug))
+            vm.Slug = SlugHelper.Generate(vm.Title);
+        else
+            vm.Slug = vm.Slug.Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(vm.Slug))
+            ModelState.AddModelError(nameof(vm.Slug), "Не удалось сгенерировать slug, задайте вручную");
+        else if (await _db.Courses.AnyAsync(c => c.Slug == vm.Slug))
+            ModelState.AddModelError(nameof(vm.Slug), "Такой slug уже занят");
+
+        if (!await _db.Categories.AnyAsync(c => c.Id == vm.CategoryId))
+            ModelState.AddModelError(nameof(vm.CategoryId), "Выберите категорию");
+
+        // Нормализуем структуру курса
+        vm.Sections ??= new List<WizardSection>();
+        foreach (var s in vm.Sections)
+        {
+            s.Title = (s.Title ?? "").Trim();
+            s.Lessons ??= new List<WizardLesson>();
+            foreach (var l in s.Lessons)
+            {
+                l.Title = (l.Title ?? "").Trim();
+                l.VideoUrl = string.IsNullOrWhiteSpace(l.VideoUrl) ? null : l.VideoUrl.Trim();
+                l.TextContent = string.IsNullOrWhiteSpace(l.TextContent) ? null : l.TextContent.Trim();
+            }
+            s.Lessons = s.Lessons.Where(l => !string.IsNullOrEmpty(l.Title)).ToList();
+        }
+        vm.Sections = vm.Sections.Where(s => !string.IsNullOrEmpty(s.Title) && s.Lessons.Count > 0).ToList();
+        if (vm.Sections.Count == 0)
+            ModelState.AddModelError(string.Empty, "Курс должен содержать хотя бы один раздел с уроком");
+
+        // Финальный тест
+        var allowsTests = await CurrentPlanAllowsTestsAsync(userId);
+        if (vm.IncludeFinalTest && !allowsTests)
+        {
+            ModelState.AddModelError(string.Empty, "Финальный тест доступен на планах Basic/Pro. Уберите галочку или смените план.");
+            vm.IncludeFinalTest = false;
+        }
+
+        if (vm.IncludeFinalTest)
+        {
+            vm.FinalTestQuestions ??= new List<WizardTestQuestion>();
+            foreach (var q in vm.FinalTestQuestions)
+            {
+                q.Text = (q.Text ?? "").Trim();
+                q.Options ??= new List<WizardTestOption>();
+                foreach (var o in q.Options) o.Text = (o.Text ?? "").Trim();
+                q.Options = q.Options.Where(o => !string.IsNullOrEmpty(o.Text)).ToList();
+            }
+            vm.FinalTestQuestions = vm.FinalTestQuestions.Where(q => !string.IsNullOrEmpty(q.Text)).ToList();
+
+            if (vm.FinalTestQuestions.Count == 0)
+                ModelState.AddModelError(string.Empty, "Финальный тест требует хотя бы один вопрос");
+            for (int i = 0; i < vm.FinalTestQuestions.Count; i++)
+            {
+                var q = vm.FinalTestQuestions[i];
+                if (q.Options.Count < 2)
+                    ModelState.AddModelError(string.Empty, $"Вопрос {i + 1} финального теста: нужно минимум 2 варианта");
+                else if (!q.Options.Any(o => o.IsCorrect))
+                    ModelState.AddModelError(string.Empty, $"Вопрос {i + 1}: отметьте правильный вариант");
+                else if (q.Type == QuestionType.SingleChoice && q.Options.Count(o => o.IsCorrect) > 1)
+                    ModelState.AddModelError(string.Empty, $"Вопрос {i + 1}: при одиночном выборе только один правильный");
+            }
+        }
+
+        vm.AllowsTests = allowsTests;
+        vm.AvailableCategories = await _db.Categories.OrderBy(c => c.Name).ToListAsync();
+
+        if (!ModelState.IsValid)
+            return View(vm);
+
+        // Сохранение в одной транзакции
+        var course = new Course
+        {
+            Id = Guid.NewGuid(),
+            Title = vm.Title.Trim(),
+            Slug = vm.Slug!,
+            Description = vm.Description?.Trim(),
+            CoverUrl = string.IsNullOrWhiteSpace(vm.CoverUrl) ? "/assets/img/course/course-01.jpg" : vm.CoverUrl!.Trim(),
+            CategoryId = vm.CategoryId,
+            Price = vm.Price,
+            Language = string.IsNullOrWhiteSpace(vm.Language) ? "ru" : vm.Language,
+            IsPublished = vm.IsPublished,
+            InstructorId = userId,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        _db.Courses.Add(course);
+
+        Lesson? lastLesson = null;
+        for (int si = 0; si < vm.Sections.Count; si++)
+        {
+            var s = vm.Sections[si];
+            var section = new Section
+            {
+                Id = Guid.NewGuid(),
+                CourseId = course.Id,
+                Title = s.Title,
+                OrderIndex = si + 1
+            };
+            _db.Sections.Add(section);
+
+            for (int li = 0; li < s.Lessons.Count; li++)
+            {
+                var l = s.Lessons[li];
+                var lesson = new Lesson
+                {
+                    Id = Guid.NewGuid(),
+                    SectionId = section.Id,
+                    Title = l.Title,
+                    VideoUrl = l.VideoUrl,
+                    TextContent = l.TextContent,
+                    OrderIndex = li + 1
+                };
+                _db.Lessons.Add(lesson);
+                lastLesson = lesson;
+            }
+        }
+
+        if (vm.IncludeFinalTest && lastLesson is not null)
+        {
+            var test = new Test
+            {
+                Id = Guid.NewGuid(),
+                LessonId = lastLesson.Id,
+                Title = string.IsNullOrWhiteSpace(vm.FinalTestTitle) ? $"Финальный тест — {course.Title}" : vm.FinalTestTitle!.Trim(),
+                PassingScore = vm.FinalTestPassingScore
+            };
+            _db.Tests.Add(test);
+
+            for (int qi = 0; qi < vm.FinalTestQuestions.Count; qi++)
+            {
+                var qi_ = vm.FinalTestQuestions[qi];
+                var q = new Question
+                {
+                    Id = Guid.NewGuid(),
+                    TestId = test.Id,
+                    Text = qi_.Text,
+                    Type = qi_.Type,
+                    OrderIndex = qi + 1
+                };
+                _db.Questions.Add(q);
+                foreach (var oi in qi_.Options)
+                {
+                    _db.AnswerOptions.Add(new AnswerOption
+                    {
+                        Id = Guid.NewGuid(),
+                        QuestionId = q.Id,
+                        Text = oi.Text,
+                        IsCorrect = oi.IsCorrect
+                    });
+                }
+            }
+        }
+
+        await _db.SaveChangesAsync();
+        await _audit.LogAsync("course.wizard.create", "Course", course.Id.ToString(),
+            $"{vm.Sections.Count} sec, {vm.Sections.Sum(s => s.Lessons.Count)} les, test={vm.IncludeFinalTest}");
+
+        TempData["Toast"] = $"Курс «{course.Title}» создан мастером ({vm.Sections.Sum(s => s.Lessons.Count)} уроков" +
+                            (vm.IncludeFinalTest ? ", с финальным тестом" : "") + ")";
         return RedirectToAction(nameof(Courses));
     }
 
@@ -213,6 +530,266 @@ public class InstructorController : Controller
         await _db.SaveChangesAsync();
         TempData["Toast"] = "Курс удалён";
         return RedirectToAction(nameof(Courses));
+    }
+
+    // ---------- Тесты к урокам ----------
+
+    [HttpGet("courses/{id:guid}/tests")]
+    public async Task<IActionResult> Tests(Guid id)
+    {
+        var userId = GetUserId();
+        var course = await _db.Courses
+            .Include(c => c.Sections.OrderBy(s => s.OrderIndex))
+                .ThenInclude(s => s.Lessons.OrderBy(l => l.OrderIndex))
+                    .ThenInclude(l => l.Test)
+                        .ThenInclude(t => t!.Questions)
+            .FirstOrDefaultAsync(c => c.Id == id && c.InstructorId == userId);
+        if (course is null) return NotFound();
+
+        var rows = course.Sections
+            .SelectMany(s => s.Lessons.Select(l => new TestLessonRow
+            {
+                LessonId = l.Id,
+                SectionTitle = s.Title,
+                LessonTitle = l.Title,
+                TestId = l.Test?.Id,
+                TestTitle = l.Test?.Title,
+                PassingScore = l.Test?.PassingScore,
+                QuestionsCount = l.Test?.Questions.Count ?? 0
+            }))
+            .ToList();
+
+        var vm = new TestListViewModel
+        {
+            Course = course,
+            Rows = rows,
+            AllowsTests = await CurrentPlanAllowsTestsAsync(userId)
+        };
+        return View("Tests", vm);
+    }
+
+    [HttpGet("lessons/{lessonId:guid}/test/edit")]
+    public async Task<IActionResult> EditTest(Guid lessonId)
+    {
+        var userId = GetUserId();
+        var lesson = await _db.Lessons
+            .Include(l => l.Section).ThenInclude(s => s.Course)
+            .Include(l => l.Test!).ThenInclude(t => t.Questions.OrderBy(q => q.OrderIndex)).ThenInclude(q => q.Options)
+            .FirstOrDefaultAsync(l => l.Id == lessonId);
+        if (lesson is null || lesson.Section.Course.InstructorId != userId) return NotFound();
+
+        if (!await CurrentPlanAllowsTestsAsync(userId))
+        {
+            TempData["Toast"] = "Для работы с тестами нужен план Basic или Pro.";
+            return RedirectToAction(nameof(Tests), new { id = lesson.Section.CourseId });
+        }
+
+        var vm = new TestFormViewModel
+        {
+            CourseId = lesson.Section.CourseId,
+            CourseTitle = lesson.Section.Course.Title,
+            LessonId = lesson.Id,
+            LessonTitle = lesson.Title,
+            TestId = lesson.Test?.Id,
+            Title = lesson.Test?.Title ?? $"Тест: {lesson.Title}",
+            PassingScore = lesson.Test?.PassingScore ?? 70,
+            Questions = lesson.Test?.Questions
+                .OrderBy(q => q.OrderIndex)
+                .Select(q => new TestQuestionInput
+                {
+                    Id = q.Id,
+                    Text = q.Text,
+                    Type = q.Type,
+                    Options = q.Options.Select(o => new TestOptionInput
+                    {
+                        Id = o.Id,
+                        Text = o.Text,
+                        IsCorrect = o.IsCorrect
+                    }).ToList()
+                }).ToList() ?? new List<TestQuestionInput>()
+        };
+
+        // Если новый тест — добавим один пустой вопрос с двумя опциями для удобства
+        if (vm.Questions.Count == 0)
+        {
+            vm.Questions.Add(new TestQuestionInput
+            {
+                Text = "",
+                Type = QuestionType.SingleChoice,
+                Options = new List<TestOptionInput>
+                {
+                    new() { Text = "", IsCorrect = true },
+                    new() { Text = "", IsCorrect = false }
+                }
+            });
+        }
+
+        return View("TestForm", vm);
+    }
+
+    [HttpPost("lessons/{lessonId:guid}/test/edit")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditTest(Guid lessonId, TestFormViewModel vm)
+    {
+        var userId = GetUserId();
+        var lesson = await _db.Lessons
+            .Include(l => l.Section).ThenInclude(s => s.Course)
+            .Include(l => l.Test!).ThenInclude(t => t.Questions).ThenInclude(q => q.Options)
+            .FirstOrDefaultAsync(l => l.Id == lessonId);
+        if (lesson is null || lesson.Section.Course.InstructorId != userId) return NotFound();
+
+        if (!await CurrentPlanAllowsTestsAsync(userId))
+        {
+            TempData["Toast"] = "Для работы с тестами нужен план Basic или Pro.";
+            return RedirectToAction(nameof(Tests), new { id = lesson.Section.CourseId });
+        }
+
+        vm.CourseId = lesson.Section.CourseId;
+        vm.CourseTitle = lesson.Section.Course.Title;
+        vm.LessonId = lesson.Id;
+        vm.LessonTitle = lesson.Title;
+
+        // Нормализация + валидация
+        vm.Questions ??= new List<TestQuestionInput>();
+        foreach (var q in vm.Questions)
+        {
+            q.Text = (q.Text ?? "").Trim();
+            q.Options ??= new List<TestOptionInput>();
+            foreach (var o in q.Options) o.Text = (o.Text ?? "").Trim();
+            q.Options = q.Options.Where(o => !string.IsNullOrEmpty(o.Text)).ToList();
+        }
+        vm.Questions = vm.Questions.Where(q => !string.IsNullOrEmpty(q.Text)).ToList();
+
+        if (vm.Questions.Count == 0)
+            ModelState.AddModelError(string.Empty, "Добавьте хотя бы один вопрос");
+
+        for (int i = 0; i < vm.Questions.Count; i++)
+        {
+            var q = vm.Questions[i];
+            if (q.Options.Count < 2)
+                ModelState.AddModelError($"Questions[{i}].Options", $"Вопрос {i + 1}: нужно минимум 2 варианта");
+            else if (!q.Options.Any(o => o.IsCorrect))
+                ModelState.AddModelError($"Questions[{i}].Options", $"Вопрос {i + 1}: отметьте хотя бы один правильный вариант");
+            else if (q.Type == QuestionType.SingleChoice && q.Options.Count(o => o.IsCorrect) > 1)
+                ModelState.AddModelError($"Questions[{i}].Options", $"Вопрос {i + 1}: при одиночном выборе можно отметить только один правильный вариант");
+        }
+
+        if (!ModelState.IsValid)
+            return View("TestForm", vm);
+
+        // Сохранение: проще всего пересоздать вопросы целиком (старые ответы студентов не привязаны к ним напрямую через cascade — мы используем Restrict).
+        var test = lesson.Test;
+        if (test is null)
+        {
+            test = new Test
+            {
+                Id = Guid.NewGuid(),
+                LessonId = lesson.Id,
+                Title = vm.Title.Trim(),
+                PassingScore = vm.PassingScore
+            };
+            _db.Tests.Add(test);
+        }
+        else
+        {
+            test.Title = vm.Title.Trim();
+            test.PassingScore = vm.PassingScore;
+
+            // Удаляем старые ответы студентов, чтобы можно было поменять структуру вопросов
+            var oldQids = test.Questions.Select(q => q.Id).ToList();
+            if (oldQids.Count > 0)
+            {
+                var oldAnswers = await _db.StudentAnswers.Where(a => oldQids.Contains(a.QuestionId)).ToListAsync();
+                if (oldAnswers.Count > 0) _db.StudentAnswers.RemoveRange(oldAnswers);
+            }
+            var oldAttempts = await _db.TestAttempts.Where(a => a.TestId == test.Id).ToListAsync();
+            if (oldAttempts.Count > 0) _db.TestAttempts.RemoveRange(oldAttempts);
+
+            foreach (var q in test.Questions.ToList())
+            {
+                _db.AnswerOptions.RemoveRange(q.Options);
+                _db.Questions.Remove(q);
+            }
+        }
+
+        for (int i = 0; i < vm.Questions.Count; i++)
+        {
+            var qi = vm.Questions[i];
+            var q = new Question
+            {
+                Id = Guid.NewGuid(),
+                TestId = test.Id,
+                Text = qi.Text,
+                Type = qi.Type,
+                OrderIndex = i + 1
+            };
+            _db.Questions.Add(q);
+
+            foreach (var oi in qi.Options)
+            {
+                _db.AnswerOptions.Add(new AnswerOption
+                {
+                    Id = Guid.NewGuid(),
+                    QuestionId = q.Id,
+                    Text = oi.Text,
+                    IsCorrect = oi.IsCorrect
+                });
+            }
+        }
+
+        await _db.SaveChangesAsync();
+        await _audit.LogAsync("test.save", "Test", test.Id.ToString(), $"{vm.Questions.Count} q.");
+
+        TempData["Toast"] = $"Тест «{test.Title}» сохранён ({vm.Questions.Count} вопр.)";
+        return RedirectToAction(nameof(Tests), new { id = lesson.Section.CourseId });
+    }
+
+    [HttpPost("lessons/{lessonId:guid}/test/delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteTest(Guid lessonId)
+    {
+        var userId = GetUserId();
+        var lesson = await _db.Lessons
+            .Include(l => l.Section).ThenInclude(s => s.Course)
+            .Include(l => l.Test!).ThenInclude(t => t.Questions).ThenInclude(q => q.Options)
+            .FirstOrDefaultAsync(l => l.Id == lessonId);
+        if (lesson is null || lesson.Section.Course.InstructorId != userId) return NotFound();
+        if (lesson.Test is null) return RedirectToAction(nameof(Tests), new { id = lesson.Section.CourseId });
+
+        var test = lesson.Test;
+        var qids = test.Questions.Select(q => q.Id).ToList();
+        if (qids.Count > 0)
+        {
+            var oldAnswers = await _db.StudentAnswers.Where(a => qids.Contains(a.QuestionId)).ToListAsync();
+            if (oldAnswers.Count > 0) _db.StudentAnswers.RemoveRange(oldAnswers);
+        }
+        var oldAttempts = await _db.TestAttempts.Where(a => a.TestId == test.Id).ToListAsync();
+        if (oldAttempts.Count > 0) _db.TestAttempts.RemoveRange(oldAttempts);
+
+        foreach (var q in test.Questions.ToList())
+        {
+            _db.AnswerOptions.RemoveRange(q.Options);
+            _db.Questions.Remove(q);
+        }
+        _db.Tests.Remove(test);
+        await _db.SaveChangesAsync();
+        await _audit.LogAsync("test.delete", "Test", test.Id.ToString(), test.Title);
+
+        TempData["Toast"] = "Тест удалён";
+        return RedirectToAction(nameof(Tests), new { id = lesson.Section.CourseId });
+    }
+
+    private async Task<bool> CurrentPlanAllowsTestsAsync(Guid userId)
+    {
+        var plan = await _db.InstructorSubscriptions
+            .Include(s => s.Plan)
+            .Where(s => s.InstructorId == userId && s.IsActive &&
+                        (s.ExpiresAt == null || s.ExpiresAt > DateTime.UtcNow))
+            .OrderByDescending(s => s.StartedAt)
+            .Select(s => s.Plan)
+            .FirstOrDefaultAsync();
+        // Если активной подписки нет — считаем Free, тесты запрещены.
+        return plan?.AllowsTests ?? false;
     }
 
     // ---------- helpers ----------

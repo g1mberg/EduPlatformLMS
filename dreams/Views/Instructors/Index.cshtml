@@ -1,0 +1,132 @@
+@model dreams.Models.Courses.InstructorPublicViewModel
+@{
+    var u = Model.Instructor;
+    ViewData["Title"] = u.FullName ?? "Instructor";
+    Layout = "_InnerLayout";
+
+    string PriceLabel(decimal p) => p == 0 ? L["Common.Free"].Value : $"{p:N0} ₽";
+}
+
+@section Styles {
+    <style>
+        .inst-hero {
+            background: linear-gradient(135deg, rgba(77,68,224,.08), rgba(77,68,224,.02));
+            border-radius: 16px; padding: 28px;
+        }
+        .inst-avatar {
+            width: 128px; height: 128px; border-radius: 50%; object-fit: cover;
+            box-shadow: 0 6px 18px rgba(77,68,224,.18);
+        }
+        .stat-box {
+            background: #fff; border: 1px solid #eef0f7; border-radius: 12px; padding: 18px;
+            text-align: center;
+        }
+        .stat-box .num { font-size: 28px; font-weight: 700; color: #4d44e0; line-height: 1; }
+        .stat-box .lbl { color: #6b7280; font-size: 13px; margin-top: 6px; }
+    </style>
+}
+
+<div class="breadcrumb-bar text-center">
+    <div class="container">
+        <h2 class="breadcrumb-title mb-2">@L["InstructorPub.Title"]</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb justify-content-center mb-0">
+                <li class="breadcrumb-item"><a href="/">@L["Nav.Home"]</a></li>
+                <li class="breadcrumb-item"><a href="/courses">@L["Nav.Courses"]</a></li>
+                <li class="breadcrumb-item active">@u.FullName</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container">
+
+        <div class="inst-hero mb-4">
+            <div class="row align-items-center">
+                <div class="col-md-3 text-center">
+                    <img class="inst-avatar"
+                         src="@(string.IsNullOrEmpty(u.AvatarUrl) ? "/assets/img/user/user-29.jpg" : u.AvatarUrl)"
+                         alt="@u.FullName">
+                </div>
+                <div class="col-md-6 mt-3 mt-md-0">
+                    <h3 class="mb-2">@u.FullName</h3>
+                    <p class="text-muted mb-3">@L["Course.Instructor"]</p>
+                    @if (!string.IsNullOrWhiteSpace(u.Bio))
+                    {
+                        <p class="mb-0"><b>@L["InstructorPub.Bio"]:</b> @u.Bio</p>
+                    }
+                    else
+                    {
+                        <p class="mb-0 text-muted fst-italic">@L["InstructorPub.NoBio"]</p>
+                    }
+                </div>
+                <div class="col-md-3 mt-3 mt-md-0">
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <div class="stat-box">
+                                <div class="num">@Model.CoursesCount</div>
+                                <div class="lbl">@L["InstructorPub.StatCourses"]</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-box">
+                                <div class="num">@Model.TotalStudents</div>
+                                <div class="lbl">@L["InstructorPub.StatStudents"]</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-box">
+                                <div class="num">@Model.AverageRating.ToString("0.0")</div>
+                                <div class="lbl">@L["InstructorPub.StatRating"]</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h4 class="mb-3">@L["InstructorPub.MyCourses"]</h4>
+
+        @if (Model.Courses.Count == 0)
+        {
+            <div class="alert alert-light text-center py-5">@L["InstructorPub.NoCoursesPublic"]</div>
+        }
+        else
+        {
+            <div class="row g-4">
+                @foreach (var c in Model.Courses)
+                {
+                    <div class="col-xl-4 col-md-6">
+                        <div class="course-item-two course-item mx-0">
+                            <div class="course-img">
+                                <a href="/courses/@c.Slug">
+                                    <img src="@c.CoverUrl" alt="@c.Title" class="img-fluid">
+                                </a>
+                                @if (c.Price == 0)
+                                {
+                                    <div class="position-absolute start-0 top-0 p-3 z-index-2">
+                                        <div class="badge text-bg-success">@L["Catalog.Free"]</div>
+                                    </div>
+                                }
+                            </div>
+                            <div class="course-content">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge badge-light bg-light fs-13">@c.Category.Name</span>
+                                    <span class="d-flex align-items-center fs-13">
+                                        <i class="fa-solid fa-star text-warning me-1"></i>@c.AverageRating.ToString("0.0")
+                                    </span>
+                                </div>
+                                <h6 class="title mb-2"><a href="/courses/@c.Slug">@c.Title</a></h6>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <h5 class="text-secondary mb-0">@PriceLabel(c.Price)</h5>
+                                    <a href="/courses/@c.Slug" class="btn btn-dark btn-sm">@L["Catalog.Details"]</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>

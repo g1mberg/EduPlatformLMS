@@ -1,9 +1,9 @@
 @model dreams.Models.Courses.CourseCatalogViewModel
 @{
-    ViewData["Title"] = "Каталог курсов";
+    ViewData["Title"] = L["Catalog.Title"].Value;
     Layout = "_InnerLayout";
 
-    string PriceLabel(decimal p) => p == 0 ? "Бесплатно" : $"{p:N0} ₽";
+    string PriceLabel(decimal p) => p == 0 ? L["Catalog.Free"].Value : $"{p:N0} ₽";
     string CatLink(string? slug) => Url.Action("Index", "Courses", new {
         search = Model.Search, category = slug, price = Model.Price, sort = Model.Sort
     })!;
@@ -17,11 +17,11 @@
 
 <div class="breadcrumb-bar text-center">
     <div class="container">
-        <h2 class="breadcrumb-title mb-2">Каталог курсов</h2>
+        <h2 class="breadcrumb-title mb-2">@L["Catalog.Title"]</h2>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb justify-content-center mb-0">
-                <li class="breadcrumb-item"><a href="/">Главная</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Курсы</li>
+                <li class="breadcrumb-item"><a href="/">@L["Nav.Home"]</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@L["Nav.Courses"]</li>
             </ol>
         </nav>
     </div>
@@ -34,22 +34,22 @@
             <aside class="col-lg-3 theiaStickySidebar">
                 <div class="filter-clear">
                     <div class="clear-filter mb-4 pb-lg-2 d-flex align-items-center justify-content-between">
-                        <h5 class="mb-0"><i class="feather-filter me-2"></i>Фильтры</h5>
-                        <a href="@Url.Action("Index", "Courses")" class="clear-text">Сбросить</a>
+                        <h5 class="mb-0"><i class="feather-filter me-2"></i>@L["Catalog.Filters"]</h5>
+                        <a href="@Url.Action("Index", "Courses")" class="clear-text">@L["Catalog.Reset"]</a>
                     </div>
 
                     <div class="accordion accordion-customicon1 accordions-items-seperate">
                         <div class="accordion-item">
                             <h2 class="accordion-header">
                                 <a href="#" class="accordion-button" data-bs-toggle="collapse" data-bs-target="#flt-cat" aria-expanded="true">
-                                    Категории <i class="fa-solid fa-chevron-down"></i>
+                                    @L["Catalog.Categories"] <i class="fa-solid fa-chevron-down"></i>
                                 </a>
                             </h2>
                             <div id="flt-cat" class="accordion-collapse collapse show">
                                 <div class="accordion-body">
                                     <div>
                                         <a href="@CatLink(null)" class="d-flex justify-content-between text-decoration-none @(Model.CategorySlug == null ? "fw-semibold text-secondary" : "link-default")">
-                                            <span>Все категории</span>
+                                            <span>@L["Catalog.AllCategories"]</span>
                                             <span class="text-muted">@Model.Categories.Sum(c => c.Count)</span>
                                         </a>
                                     </div>
@@ -70,14 +70,14 @@
                         <div class="accordion-item">
                             <h2 class="accordion-header">
                                 <a href="#" class="accordion-button" data-bs-toggle="collapse" data-bs-target="#flt-price" aria-expanded="true">
-                                    Цена <i class="fa-solid fa-chevron-down"></i>
+                                    @L["Catalog.Price"] <i class="fa-solid fa-chevron-down"></i>
                                 </a>
                             </h2>
                             <div id="flt-price" class="accordion-collapse collapse show">
                                 <div class="accordion-body">
-                                    <div><a href="@PriceLink(null)"   class="text-decoration-none @(Model.Price == null   ? "fw-semibold text-secondary" : "link-default")">Все</a></div>
-                                    <div class="mt-2"><a href="@PriceLink("free")" class="text-decoration-none @(Model.Price == "free" ? "fw-semibold text-secondary" : "link-default")">Бесплатно</a></div>
-                                    <div class="mt-2"><a href="@PriceLink("paid")" class="text-decoration-none @(Model.Price == "paid" ? "fw-semibold text-secondary" : "link-default")">Платные</a></div>
+                                    <div><a href="@PriceLink(null)"   class="text-decoration-none @(Model.Price == null   ? "fw-semibold text-secondary" : "link-default")">@L["Catalog.PriceAll"]</a></div>
+                                    <div class="mt-2"><a href="@PriceLink("free")" class="text-decoration-none @(Model.Price == "free" ? "fw-semibold text-secondary" : "link-default")">@L["Catalog.PriceFree"]</a></div>
+                                    <div class="mt-2"><a href="@PriceLink("paid")" class="text-decoration-none @(Model.Price == "paid" ? "fw-semibold text-secondary" : "link-default")">@L["Catalog.PricePaid"]</a></div>
                                 </div>
                             </div>
                         </div>
@@ -94,13 +94,13 @@
                                 <h6 class="fw-medium mb-0">
                                     @if (Model.TotalCount == 0)
                                     {
-                                        <text>Ничего не найдено</text>
+                                        <text>@L["Catalog.NothingFound"]</text>
                                     }
                                     else
                                     {
                                         var from = (Model.Page - 1) * Model.PageSize + 1;
                                         var to = Math.Min(Model.Page * Model.PageSize, Model.TotalCount);
-                                        <text>Показано @from–@to из @Model.TotalCount</text>
+                                        @L["Catalog.ShowingOf", from, to, Model.TotalCount]
                                     }
                                 </h6>
                             </div>
@@ -110,15 +110,15 @@
                                 <input type="hidden" name="category" value="@Model.CategorySlug" />
                                 <input type="hidden" name="price"    value="@Model.Price" />
                                 <select name="sort" class="form-select" onchange="this.form.submit()">
-                                    <option value="new"        selected="@(Model.Sort == "new")">Сначала новые</option>
-                                    <option value="rating"     selected="@(Model.Sort == "rating")">По рейтингу</option>
-                                    <option value="students"   selected="@(Model.Sort == "students")">По популярности</option>
-                                    <option value="price-asc"  selected="@(Model.Sort == "price-asc")">Цена: по возрастанию</option>
-                                    <option value="price-desc" selected="@(Model.Sort == "price-desc")">Цена: по убыванию</option>
+                                    <option value="new"        selected="@(Model.Sort == "new")">@L["Catalog.SortNew"]</option>
+                                    <option value="rating"     selected="@(Model.Sort == "rating")">@L["Catalog.SortRating"]</option>
+                                    <option value="students"   selected="@(Model.Sort == "students")">@L["Catalog.SortPopular"]</option>
+                                    <option value="price-asc"  selected="@(Model.Sort == "price-asc")">@L["Catalog.SortPriceAsc"]</option>
+                                    <option value="price-desc" selected="@(Model.Sort == "price-desc")">@L["Catalog.SortPriceDesc"]</option>
                                 </select>
                                 <div class="search-group">
                                     <i class="isax isax-search-normal-1"></i>
-                                    <input type="text" name="search" value="@Model.Search" class="form-control" placeholder="Поиск" />
+                                    <input type="text" name="search" value="@Model.Search" class="form-control" placeholder="@L["Catalog.SearchPlaceholder"]" />
                                 </div>
                             </div>
                         </div>
@@ -128,7 +128,7 @@
                 @if (Model.Courses.Count == 0)
                 {
                     <div class="alert alert-light text-center py-5">
-                        По вашему запросу ничего не найдено. Попробуйте сбросить фильтры.
+                        @L["Catalog.NothingFound"]
                     </div>
                 }
                 else
@@ -145,7 +145,7 @@
                                         @if (c.Price == 0)
                                         {
                                             <div class="position-absolute start-0 top-0 p-3 z-index-2">
-                                                <div class="badge text-bg-success">Бесплатно</div>
+                                                <div class="badge text-bg-success">@L["Catalog.Free"]</div>
                                             </div>
                                         }
                                     </div>
@@ -156,7 +156,7 @@
                                                     <img src="@(string.IsNullOrEmpty(c.Instructor.AvatarUrl) ? "/assets/img/user/user-29.jpg" : c.Instructor.AvatarUrl)" alt="" class="img-fluid avatar avatar-sm rounded-circle">
                                                 </span>
                                                 <div class="ms-2">
-                                                    <span class="link-default fs-14">@c.Instructor.FullName</span>
+                                                    <a href="/instructors/@c.InstructorId" class="link-default fs-14">@c.Instructor.FullName</a>
                                                 </div>
                                             </div>
                                             <span class="badge badge-light rounded-pill bg-light fs-13 fw-medium mb-0">
@@ -166,12 +166,12 @@
                                         <h6 class="title mb-2"><a href="/courses/@c.Slug">@c.Title</a></h6>
                                         <p class="d-flex align-items-center mb-3">
                                             <i class="fa-solid fa-star text-warning me-2"></i>
-                                            @c.AverageRating.ToString("0.0") (@c.StudentsCount студентов)
+                                            @c.AverageRating.ToString("0.0") (@c.StudentsCount @L["Catalog.Students"])
                                         </p>
                                         <div class="d-flex align-items-center justify-content-between">
                                             <h5 class="text-secondary mb-0">@PriceLabel(c.Price)</h5>
                                             <a href="/courses/@c.Slug" class="btn btn-dark btn-sm d-inline-flex align-items-center">
-                                                Подробнее <i class="isax isax-arrow-right-3 ms-1"></i>
+                                                @L["Catalog.Details"] <i class="isax isax-arrow-right-3 ms-1"></i>
                                             </a>
                                         </div>
                                     </div>
@@ -182,27 +182,20 @@
 
                     @if (Model.TotalPages > 1)
                     {
-                        <div class="row align-items-center">
-                            <div class="col-md-2">
-                                <p class="pagination-text">Страница @Model.Page из @Model.TotalPages</p>
-                            </div>
-                            <div class="col-md-10">
-                                <ul class="pagination lms-page justify-content-center justify-content-md-end mt-2 mt-md-0">
-                                    <li class="page-item prev @(Model.Page <= 1 ? "disabled" : "")">
-                                        <a class="page-link" href="@(Model.Page > 1 ? PageLink(Model.Page - 1) : "#")"><i class="fas fa-angle-left"></i></a>
-                                    </li>
-                                    @for (var p = 1; p <= Model.TotalPages; p++)
-                                    {
-                                        <li class="page-item @(p == Model.Page ? "active" : "")">
-                                            <a class="page-link" href="@PageLink(p)">@p</a>
-                                        </li>
-                                    }
-                                    <li class="page-item next @(Model.Page >= Model.TotalPages ? "disabled" : "")">
-                                        <a class="page-link" href="@(Model.Page < Model.TotalPages ? PageLink(Model.Page + 1) : "#")"><i class="fas fa-angle-right"></i></a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
+                        <ul class="pagination lms-page justify-content-center mt-3">
+                            <li class="page-item prev @(Model.Page <= 1 ? "disabled" : "")">
+                                <a class="page-link" href="@(Model.Page > 1 ? PageLink(Model.Page - 1) : "#")"><i class="fas fa-angle-left"></i></a>
+                            </li>
+                            @for (var p = 1; p <= Model.TotalPages; p++)
+                            {
+                                <li class="page-item @(p == Model.Page ? "active" : "")">
+                                    <a class="page-link" href="@PageLink(p)">@p</a>
+                                </li>
+                            }
+                            <li class="page-item next @(Model.Page >= Model.TotalPages ? "disabled" : "")">
+                                <a class="page-link" href="@(Model.Page < Model.TotalPages ? PageLink(Model.Page + 1) : "#")"><i class="fas fa-angle-right"></i></a>
+                            </li>
+                        </ul>
                     }
                 }
             </div>

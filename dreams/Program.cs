@@ -8,6 +8,9 @@ using Microsoft.Extensions.WebEncoders;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// User-secrets подхватываем явно (иначе только в Development), чтобы SMTP-настройки работали и под Production
+builder.Configuration.AddUserSecrets<Program>(optional: true);
+
 builder.Services.AddDbContext<ApplicationDbContext>(o =>
     o.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
@@ -29,10 +32,23 @@ builder.Services.ConfigureApplicationCookie(o =>
 });
 
 builder.Services.AddScoped<dreams.Services.CertificateService>();
-builder.Services.AddSingleton<dreams.Services.IEmailSender, dreams.Services.FileEmailSender>();
+
+// Email: если есть Email:Smtp:Host — используем MailKit, иначе пишем .eml в App_Data/mail/
+builder.Services.AddSingleton<dreams.Services.FileEmailSender>();
+if (!string.IsNullOrWhiteSpace(builder.Configuration["Email:Smtp:Host"]))
+{
+    builder.Services.AddSingleton<dreams.Services.IEmailSender, dreams.Services.SmtpEmailSender>();
+}
+else
+{
+    builder.Services.AddSingleton<dreams.Services.IEmailSender>(sp =>
+        sp.GetRequiredService<dreams.Services.FileEmailSender>());
+}
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<dreams.Services.MongoLogService>();
+builder.Services.AddSingleton<dreams.Services.ChatMessageStore>();
 builder.Services.AddScoped<dreams.Services.UserActionLogger>();
+builder.Services.AddSignalR();
 
 // Чтобы Razor не экранировал кириллицу в &#x... сущности
 builder.Services.Configure<WebEncoderOptions>(o =>
@@ -94,5 +110,7 @@ app.UseMiddleware<dreams.Services.HttpLoggingMiddleware>();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.MapHub<dreams.Hubs.CourseChatHub>("/hubs/course-chat");
 
 app.Run();

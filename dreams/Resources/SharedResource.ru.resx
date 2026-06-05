@@ -19,9 +19,87 @@
   <data name="Nav.Logout"><value>Выйти</value></data>
   <data name="Nav.BackToSite"><value>На сайт</value></data>
 
-  <!-- Auth pages -->
-  <data name="Auth.LoginTitle"><value>Вход</value></data>
-  <data name="Auth.RegisterTitle"><value>Регистрация</value></data>
+  <!-- Common -->
+  <data name="Common.Cancel"><value>Отмена</value></data>
+  <data name="Common.Save"><value>Сохранить</value></data>
+  <data name="Common.Delete"><value>Удалить</value></data>
+  <data name="Common.Edit"><value>Редактировать</value></data>
+  <data name="Common.Back"><value>Назад</value></data>
+  <data name="Common.Next"><value>Далее</value></data>
+  <data name="Common.Yes"><value>Да</value></data>
+  <data name="Common.No"><value>Нет</value></data>
+  <data name="Common.Free"><value>Бесплатно</value></data>
+  <data name="Common.Continue"><value>Продолжить</value></data>
+
+  <!-- Home -->
+  <data name="Home.HeroEyebrow"><value>Учитесь у лучших</value></data>
+  <data name="Home.HeroTitle"><value>Прокачайте навыки на онлайн-курсах</value></data>
+  <data name="Home.HeroSubtitle"><value>Каталог из десятков курсов: программирование, дизайн, маркетинг, бизнес и многое другое.</value></data>
+  <data name="Home.BrowseCatalog"><value>Перейти к каталогу</value></data>
+  <data name="Home.BecomeInstructor"><value>Стать инструктором</value></data>
+  <data name="Home.FeaturesTitle"><value>Почему именно мы</value></data>
+  <data name="Home.FeatureExperts"><value>Эксперты-инструкторы</value></data>
+  <data name="Home.FeatureCerts"><value>Сертификаты по окончании</value></data>
+  <data name="Home.FeatureForever"><value>Доступ к материалам навсегда</value></data>
+  <data name="Home.FeatureChat"><value>Чат курса в реальном времени</value></data>
+
+  <!-- Catalog -->
+  <data name="Catalog.Title"><value>Каталог курсов</value></data>
+  <data name="Catalog.Search"><value>Поиск</value></data>
+  <data name="Catalog.SearchPlaceholder"><value>Найти курс…</value></data>
+  <data name="Catalog.Filters"><value>Фильтры</value></data>
+  <data name="Catalog.Reset"><value>Сбросить</value></data>
+  <data name="Catalog.Categories"><value>Категории</value></data>
+  <data name="Catalog.AllCategories"><value>Все категории</value></data>
+  <data name="Catalog.Price"><value>Цена</value></data>
+  <data name="Catalog.PriceAll"><value>Все</value></data>
+  <data name="Catalog.PriceFree"><value>Бесплатно</value></data>
+  <data name="Catalog.PricePaid"><value>Платные</value></data>
+  <data name="Catalog.SortBy"><value>Сортировка</value></data>
+  <data name="Catalog.SortNew"><value>Сначала новые</value></data>
+  <data name="Catalog.SortRating"><value>По рейтингу</value></data>
+  <data name="Catalog.SortPopular"><value>По популярности</value></data>
+  <data name="Catalog.SortPriceAsc"><value>Цена: по возрастанию</value></data>
+  <data name="Catalog.SortPriceDesc"><value>Цена: по убыванию</value></data>
+  <data name="Catalog.ShowingOf"><value>Показано {0}–{1} из {2}</value></data>
+  <data name="Catalog.NothingFound"><value>Ничего не найдено</value></data>
+  <data name="Catalog.Details"><value>Подробнее</value></data>
+  <data name="Catalog.Free"><value>Бесплатно</value></data>
+  <data name="Catalog.Students"><value>студентов</value></data>
+  <data name="Catalog.Lessons"><value>уроков</value></data>
+
+  <!-- Course details -->
+  <data name="Course.Lessons"><value>уроков</value></data>
+  <data name="Course.Students"><value>студентов</value></data>
+  <data name="Course.Language"><value>Язык</value></data>
+  <data name="Course.Instructor"><value>Инструктор</value></data>
+  <data name="Course.Program"><value>Программа курса</value></data>
+  <data name="Course.IncludedTitle"><value>Включено в курс</value></data>
+  <data name="Course.IncludedVideo"><value>видеоуроков</value></data>
+  <data name="Course.IncludedText"><value>Текстовые материалы</value></data>
+  <data name="Course.IncludedForever"><value>Доступ навсегда</value></data>
+  <data name="Course.EditCourse"><value>Редактировать курс</value></data>
+  <data name="Course.GoToLearning"><value>Перейти к обучению</value></data>
+  <data name="Course.Enroll"><value>Записаться на курс</value></data>
+  <data name="Course.LoginToEnroll"><value>Войти, чтобы записаться</value></data>
+  <data name="Course.ChatLink"><value>Чат курса</value></data>
+  <data name="Course.NotPublishedOwner"><value>Этот курс не опубликован. Вы видите его как владелец.</value></data>
+
+  <!-- Instructor public -->
+  <data name="InstructorPub.Title"><value>Профиль инструктора</value></data>
+  <data name="InstructorPub.Bio"><value>О себе</value></data>
+  <data name="InstructorPub.NoBio"><value>Инструктор пока не добавил информацию о себе.</value></data>
+  <data name="InstructorPub.StatCourses"><value>курсов</value></data>
+  <data name="InstructorPub.StatStudents"><value>студентов</value></data>
+  <data name="InstructorPub.StatRating"><value>средний рейтинг</value></data>
+  <data name="InstructorPub.MyCourses"><value>Курсы инструктора</value></data>
+  <data name="InstructorPub.NoCoursesPublic"><value>У инструктора пока нет опубликованных курсов.</value></data>
+
+  <!-- Auth -->
+  <data name="Auth.LoginTitle"><value>Вход в аккаунт</value></data>
+  <data name="Auth.LoginSubtitle"><value>Войдите, чтобы продолжить обучение</value></data>
+  <data name="Auth.RegisterTitle"><value>Создание аккаунта</value></data>
+  <data name="Auth.RegisterSubtitle"><value>Зарегистрируйтесь, чтобы записываться на курсы</value></data>
   <data name="Auth.Email"><value>Email</value></data>
   <data name="Auth.Password"><value>Пароль</value></data>
   <data name="Auth.ConfirmPassword"><value>Подтвердите пароль</value></data>
@@ -32,33 +110,86 @@
   <data name="Auth.NoAccount"><value>Нет аккаунта?</value></data>
   <data name="Auth.HaveAccount"><value>Уже есть аккаунт?</value></data>
   <data name="Auth.ForgotPassword"><value>Забыли пароль?</value></data>
+  <data name="Auth.ConfirmSent"><value>Письмо с подтверждением отправлено</value></data>
+  <data name="Auth.ConfirmSentText"><value>Откройте письмо и перейдите по ссылке, чтобы активировать аккаунт.</value></data>
+  <data name="Auth.ConfirmOk"><value>Email подтверждён</value></data>
+  <data name="Auth.ConfirmFail"><value>Не удалось подтвердить email</value></data>
+  <data name="Auth.GoToLogin"><value>Перейти ко входу</value></data>
+  <data name="Auth.TwoFactorTitle"><value>Двухфакторная аутентификация</value></data>
+  <data name="Auth.TwoFactorCode"><value>Код из приложения</value></data>
+  <data name="Auth.TwoFactorVerify"><value>Подтвердить</value></data>
+  <data name="Auth.SecurityTitle"><value>Безопасность аккаунта</value></data>
+  <data name="Auth.TwoFactorEnable"><value>Включить 2FA</value></data>
+  <data name="Auth.TwoFactorDisable"><value>Отключить 2FA</value></data>
+  <data name="Auth.TwoFactorOn"><value>2FA включена</value></data>
+  <data name="Auth.TwoFactorOff"><value>2FA отключена</value></data>
 
-  <!-- Catalog -->
-  <data name="Catalog.Title"><value>Каталог курсов</value></data>
-  <data name="Catalog.Search"><value>Поиск</value></data>
-  <data name="Catalog.Filters"><value>Фильтры</value></data>
-  <data name="Catalog.Reset"><value>Сбросить</value></data>
-  <data name="Catalog.Categories"><value>Категории</value></data>
-  <data name="Catalog.AllCategories"><value>Все категории</value></data>
-  <data name="Catalog.Price"><value>Цена</value></data>
-  <data name="Catalog.PriceAll"><value>Все</value></data>
-  <data name="Catalog.PriceFree"><value>Бесплатно</value></data>
-  <data name="Catalog.PricePaid"><value>Платные</value></data>
-  <data name="Catalog.SortNew"><value>Сначала новые</value></data>
-  <data name="Catalog.SortRating"><value>По рейтингу</value></data>
-  <data name="Catalog.SortPopular"><value>По популярности</value></data>
-  <data name="Catalog.SortPriceAsc"><value>Цена: по возрастанию</value></data>
-  <data name="Catalog.SortPriceDesc"><value>Цена: по убыванию</value></data>
-  <data name="Catalog.ShowingOf"><value>Показано {0}–{1} из {2}</value></data>
-  <data name="Catalog.NothingFound"><value>Ничего не найдено</value></data>
-  <data name="Catalog.Details"><value>Подробнее</value></data>
-  <data name="Catalog.Free"><value>Бесплатно</value></data>
+  <!-- Subscription -->
+  <data name="Sub.Title"><value>Подписки для инструкторов</value></data>
+  <data name="Sub.Eyebrow"><value>Выбирайте уровень</value></data>
+  <data name="Sub.Heading"><value>Три плана для инструкторов</value></data>
+  <data name="Sub.Subheading"><value>Оплата виртуальными кредитами. Подписка действует 30 дней.</value></data>
+  <data name="Sub.Balance"><value>Баланс</value></data>
+  <data name="Sub.Active"><value>Активен</value></data>
+  <data name="Sub.Credits"><value>кредитов</value></data>
+  <data name="Sub.Recommend"><value>Рекомендуем</value></data>
+  <data name="Sub.CurrentPlan"><value>Ваш текущий план</value></data>
+  <data name="Sub.LoginToBuy"><value>Войти, чтобы оформить</value></data>
+  <data name="Sub.StartFree"><value>Начать бесплатно</value></data>
+  <data name="Sub.BuyFor"><value>Оформить за {0} кр.</value></data>
+  <data name="Sub.NotEnough"><value>Нужно ещё {0} кр.</value></data>
+  <data name="Sub.MaxCoursesUpTo"><value>До {0} активных курсов</value></data>
+  <data name="Sub.MaxCoursesUnlim"><value>Без ограничений на курсы</value></data>
+  <data name="Sub.Commission"><value>Комиссия платформы {0}%</value></data>
+  <data name="Sub.NoTests"><value>Без тестов и сертификатов</value></data>
+  <data name="Sub.WithTests"><value>Создание тестов</value></data>
+  <data name="Sub.WithCerts"><value>Выдача сертификатов</value></data>
+  <data name="Sub.AnalyticsBasic"><value>Базовая аналитика</value></data>
+  <data name="Sub.AnalyticsAdvanced"><value>Расширенная аналитика</value></data>
+  <data name="Sub.PlanFreeDesc"><value>Для тех, кто только пробует себя в роли инструктора.</value></data>
+  <data name="Sub.PlanBasicDesc"><value>Подходит инструкторам с растущим портфелем курсов.</value></data>
+  <data name="Sub.PlanProDesc"><value>Для опытных инструкторов и команд, делающих много курсов.</value></data>
+  <data name="Sub.AllBasicFeatures"><value>Все возможности Basic</value></data>
 
-  <!-- Common -->
-  <data name="Common.Cancel"><value>Отмена</value></data>
-  <data name="Common.Save"><value>Сохранить</value></data>
-  <data name="Common.Delete"><value>Удалить</value></data>
-  <data name="Common.Edit"><value>Редактировать</value></data>
-  <data name="Common.Yes"><value>Да</value></data>
-  <data name="Common.No"><value>Нет</value></data>
+  <!-- Student -->
+  <data name="Student.MyCoursesTitle"><value>Мои курсы</value></data>
+  <data name="Student.NoCoursesYet"><value>Вы пока не записались ни на один курс</value></data>
+  <data name="Student.BrowseCatalog"><value>Перейти в каталог</value></data>
+  <data name="Student.Progress"><value>Прогресс</value></data>
+  <data name="Student.GoToCourse"><value>Открыть курс</value></data>
+  <data name="Student.LessonProgress"><value>Отметить пройденным</value></data>
+  <data name="Student.CompletedLabel"><value>Пройден</value></data>
+  <data name="Student.CertificatesTitle"><value>Мои сертификаты</value></data>
+  <data name="Student.NoCertsYet"><value>Здесь появятся сертификаты после завершения курсов.</value></data>
+
+  <!-- Instructor -->
+  <data name="Instructor.MyCoursesTitle"><value>Мои курсы</value></data>
+  <data name="Instructor.SlotsUsed"><value>Использовано слотов</value></data>
+  <data name="Instructor.ChangePlan"><value>Сменить план</value></data>
+  <data name="Instructor.CreateCourse"><value>Создать курс</value></data>
+  <data name="Instructor.NoCoursesYet"><value>У вас пока нет курсов</value></data>
+  <data name="Instructor.NoCoursesHint"><value>Создайте первый курс, чтобы начать преподавать на платформе.</value></data>
+  <data name="Instructor.ColCourse"><value>Курс</value></data>
+  <data name="Instructor.ColCategory"><value>Категория</value></data>
+  <data name="Instructor.ColPrice"><value>Цена</value></data>
+  <data name="Instructor.ColStudents"><value>Студенты</value></data>
+  <data name="Instructor.ColStatus"><value>Статус</value></data>
+  <data name="Instructor.ColActions"><value>Действия</value></data>
+  <data name="Instructor.StatusPublished"><value>Опубликован</value></data>
+  <data name="Instructor.StatusDraft"><value>Черновик</value></data>
+  <data name="Instructor.ConfirmDeleteCourse"><value>Удалить курс «{0}»?</value></data>
+
+  <!-- Chat -->
+  <data name="Chat.Title"><value>Чат курса</value></data>
+  <data name="Chat.Online"><value>в эфире</value></data>
+  <data name="Chat.Reconnecting"><value>переподключение…</value></data>
+  <data name="Chat.Offline"><value>отключено</value></data>
+  <data name="Chat.Connecting"><value>подключение…</value></data>
+  <data name="Chat.NoAccess"><value>нет доступа</value></data>
+  <data name="Chat.WritePlaceholder"><value>Напишите сообщение…</value></data>
+  <data name="Chat.Empty"><value>Здесь пока тихо. Напишите первым!</value></data>
+  <data name="Chat.LoadFail"><value>Не удалось загрузить историю</value></data>
+  <data name="Chat.MongoOffWarning"><value>MongoDB не подключена — история чата хранится только в памяти процесса и пропадёт при перезапуске.</value></data>
+  <data name="Chat.BackToCourse"><value>К курсу</value></data>
+  <data name="Chat.InstructorBadge"><value>инструктор</value></data>
 </root>
