@@ -1,0 +1,45 @@
+@model IReadOnlyList<dreams.Models.Entities.SubscriptionPlan>
+@{
+    ViewData["Title"] = "Планы подписок";
+    ViewData["PageTitle"] = "Планы подписок";
+    ViewData["AdminSection"] = "plans";
+    Layout = "_AdminLayout";
+}
+
+<div class="row g-3">
+    @foreach (var p in Model)
+    {
+        <div class="col-lg-4">
+            <div class="adm-card">
+                <div class="adm-card-head">
+                    <h5>План «@p.Code»</h5>
+                    <span class="adm-badge b-primary">id @p.Id</span>
+                </div>
+                <div class="adm-card-body">
+                    <form method="post" action="/admin/plans/@p.Id/edit">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label class="form-label">Максимум курсов</label>
+                            <input name="maxCourses" type="number" min="0" value="@(p.MaxCourses?.ToString() ?? "")" class="form-control" placeholder="пусто = безлимит">
+                            <div class="form-text">Оставьте пустым для безлимита (Pro).</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Комиссия платформы, %</label>
+                            <input name="commissionPercent" type="number" min="0" max="100" step="0.5" value="@p.CommissionPercent.ToString(System.Globalization.CultureInfo.InvariantCulture)" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Цена, кредитов / мес</label>
+                            <input name="priceCredits" type="number" min="0" step="10" value="@p.PriceCredits.ToString(System.Globalization.CultureInfo.InvariantCulture)" class="form-control" required>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input name="allowsTests" type="checkbox" value="true" class="form-check-input" id="at-@p.Id" @(p.AllowsTests ? "checked" : "")>
+                            <input name="allowsTests" type="hidden" value="false">
+                            <label class="form-check-label" for="at-@p.Id">Тесты для студентов доступны</label>
+                        </div>
+                        <button class="btn btn-adm-primary w-100">Сохранить</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+</div>

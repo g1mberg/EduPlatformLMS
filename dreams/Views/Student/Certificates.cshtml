@@ -1,0 +1,52 @@
+@model IReadOnlyList<dreams.Models.Entities.Certificate>
+@{
+    ViewData["Title"] = "Мои сертификаты";
+    ViewData["DashboardArea"] = "student";
+    Layout = "_DashboardLayout";
+}
+
+<div class="breadcrumb-bar text-center">
+    <div class="container">
+        <h2 class="breadcrumb-title mb-2">Мои сертификаты</h2>
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container">
+        @if (Model.Count == 0)
+        {
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="isax isax-medal fs-1 text-muted mb-3 d-block"></i>
+                    <h5>Пока сертификатов нет</h5>
+                    <p class="text-muted">Завершите курс и сдайте финальный тест, чтобы получить сертификат.</p>
+                    <a href="/student/courses" class="btn btn-secondary mt-2">К моим курсам</a>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4">
+                @foreach (var cert in Model)
+                {
+                    <div class="col-lg-6">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-start gap-3">
+                                    <i class="isax isax-medal text-warning" style="font-size: 48px;"></i>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">@cert.Course.Title</h6>
+                                        <p class="text-muted fs-13 mb-2">Категория: @cert.Course.Category.Name</p>
+                                        <p class="fs-13 mb-2">№ <code>@cert.CertificateNumber</code></p>
+                                        <p class="fs-13 text-muted mb-3">Выдан: @cert.IssuedAt.ToLocalTime().ToString("dd.MM.yyyy")</p>
+                                        <a href="/student/certificates/@cert.Id" class="btn btn-sm btn-outline-secondary">Открыть</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>

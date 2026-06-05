@@ -1,0 +1,112 @@
+@model dreams.Controllers.LogsVm
+@{
+    ViewData["Title"] = "Логи";
+    ViewData["PageTitle"] = "Логи (MongoDB)";
+    ViewData["AdminSection"] = "logs";
+    Layout = "_AdminLayout";
+    var mongoOn = (bool)(ViewData["MongoEnabled"] ?? false);
+}
+
+@if (!mongoOn)
+{
+    <div class="alert alert-warning">
+        <strong>MongoDB недоступна.</strong>
+        Логи не пишутся и не читаются. Проверьте, запущен ли сервер по
+        <code>@(Context.RequestServices.GetRequiredService<IConfiguration>()["MongoDB:ConnectionString"])</code>
+        и доступна ли БД <code>@(Context.RequestServices.GetRequiredService<IConfiguration>()["MongoDB:Database"])</code>.
+    </div>
+}
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="adm-card">
+            <div class="adm-card-head">
+                <h5>HTTP-запросы (последние @Model.HttpLogs.Count)</h5>
+                <span class="adm-badge b-muted">http_logs</span>
+            </div>
+            <div class="table-responsive">
+                <table class="adm-table">
+                    <thead>
+                        <tr>
+                            <th>Время</th>
+                            <th>Method</th>
+                            <th>Path</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-end">ms</th>
+                            <th>User</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var l in Model.HttpLogs)
+                    {
+                        var badgeClass = l.Status switch
+                        {
+                            < 300 => "b-success",
+                            < 400 => "b-info",
+                            < 500 => "b-warning",
+                            _     => "b-danger"
+                        };
+                        <tr>
+                            <td class="text-muted small">@l.At.ToLocalTime().ToString("HH:mm:ss")</td>
+                            <td><span class="adm-badge b-primary">@l.Method</span></td>
+                            <td class="font-monospace small">@l.Path@(string.IsNullOrEmpty(l.QueryString) ? "" : l.QueryString)</td>
+                            <td class="text-center"><span class="adm-badge @badgeClass">@l.Status</span></td>
+                            <td class="text-end @(l.DurationMs > 500 ? "text-danger fw-semibold" : "text-muted") small">@l.DurationMs</td>
+                            <td class="small">@(l.UserName ?? "—")</td>
+                        </tr>
+                    }
+                    @if (Model.HttpLogs.Count == 0)
+                    {
+                        <tr><td colspan="6" class="text-center text-muted py-4">Записей нет</td></tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="adm-card">
+            <div class="adm-card-head">
+                <h5>Действия пользователей (@Model.UserActions.Count)</h5>
+                <span class="adm-badge b-muted">user_actions</span>
+            </div>
+            <div class="table-responsive">
+                <table class="adm-table">
+                    <thead>
+                        <tr>
+                            <th>Время</th>
+                            <th>Действие</th>
+                            <th>Юзер</th>
+                            <th>Объект</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var a in Model.UserActions)
+                    {
+                        <tr>
+                            <td class="text-muted small">@a.At.ToLocalTime().ToString("HH:mm:ss")</td>
+                            <td><span class="adm-badge b-info">@a.Action</span></td>
+                            <td class="small">@(a.UserName ?? "—")</td>
+                            <td class="small text-muted">
+                                @if (!string.IsNullOrEmpty(a.TargetType))
+                                {
+                                    <text>@a.TargetType</text>
+                                }
+                                @if (!string.IsNullOrEmpty(a.Details))
+                                {
+                                    <div>@a.Details</div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    @if (Model.UserActions.Count == 0)
+                    {
+                        <tr><td colspan="4" class="text-center text-muted py-4">Действий нет</td></tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

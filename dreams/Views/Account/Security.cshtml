@@ -1,0 +1,81 @@
+@{
+    ViewData["Title"] = "Безопасность";
+    ViewData["DashboardArea"] = "student";
+    Layout = "_DashboardLayout";
+    var twoFa = (bool)(ViewData["TwoFactorEnabled"] ?? false);
+    var emailOk = (bool)(ViewData["EmailConfirmed"] ?? false);
+    var toast = TempData["Toast"] as string;
+}
+
+<div class="breadcrumb-bar text-center">
+    <div class="container">
+        <h2 class="breadcrumb-title mb-2">Безопасность</h2>
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                @if (!string.IsNullOrEmpty(toast))
+                {
+                    <div class="alert alert-success">@toast</div>
+                }
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-1">Email</h5>
+                            <p class="text-muted mb-0">
+                                @if (emailOk)
+                                {
+                                    <span class="badge text-bg-success">Подтверждён</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-warning">Не подтверждён</span>
+                                }
+                            </p>
+                        </div>
+                        <i class="isax isax-sms text-secondary" style="font-size: 32px;"></i>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h5 class="mb-1">Двухфакторная аутентификация (2FA)</h5>
+                                <p class="text-muted mb-0">
+                                    @if (twoFa)
+                                    {
+                                        <span class="badge text-bg-success">Включена</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge text-bg-secondary">Отключена</span>
+                                    }
+                                </p>
+                            </div>
+                            <i class="isax isax-shield-tick text-secondary" style="font-size: 32px;"></i>
+                        </div>
+
+                        @if (twoFa)
+                        {
+                            <p>При входе вам потребуется ввести 6-значный код из приложения-аутентификатора.</p>
+                            <form method="post" action="/account/2fa-disable" onsubmit="return confirm('Отключить 2FA?');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-outline-danger">Отключить 2FA</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <p>Защитите аккаунт ещё одним фактором — кодом из Google Authenticator или другого приложения.</p>
+                            <a href="/account/2fa-setup" class="btn btn-secondary">Настроить 2FA</a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

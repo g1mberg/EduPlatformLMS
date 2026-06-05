@@ -1,0 +1,89 @@
+@model IReadOnlyList<dreams.Models.Entities.Course>
+@{
+    ViewData["Title"] = "Курсы";
+    ViewData["PageTitle"] = "Курсы";
+    ViewData["AdminSection"] = "courses";
+    Layout = "_AdminLayout";
+    var q = ViewData["Q"] as string;
+}
+
+<div class="adm-card mb-3">
+    <div class="adm-card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-10">
+                <label class="form-label small text-muted mb-1">Поиск по названию или slug</label>
+                <input name="q" value="@q" class="form-control" placeholder="введите запрос">
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-adm-primary w-100">Найти</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="adm-card">
+    <table class="adm-table">
+        <thead>
+            <tr>
+                <th>Курс</th>
+                <th>Категория</th>
+                <th>Инструктор</th>
+                <th class="text-end">Цена</th>
+                <th class="text-center">Студенты</th>
+                <th>Статус</th>
+                <th class="text-end">Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var c in Model)
+        {
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <img src="@c.CoverUrl" alt="" style="width:48px;height:36px;object-fit:cover;border-radius:6px;">
+                        <div>
+                            <a href="/courses/@c.Slug" class="adm-link fw-semibold" target="_blank">@c.Title</a>
+                            <div class="text-muted small">/@c.Slug</div>
+                        </div>
+                    </div>
+                </td>
+                <td>@c.Category.Name</td>
+                <td class="small">@c.Instructor.FullName</td>
+                <td class="text-end">@(c.Price == 0 ? "Бесплатно" : $"{c.Price:N0} ₽")</td>
+                <td class="text-center">@c.StudentsCount</td>
+                <td>
+                    @if (c.IsPublished)
+                    {
+                        <span class="adm-badge b-success">Опубликован</span>
+                    }
+                    else
+                    {
+                        <span class="adm-badge b-muted">Черновик</span>
+                    }
+                </td>
+                <td class="text-end">
+                    <div class="d-inline-flex gap-2">
+                        <form method="post" action="/admin/courses/@c.Id/publish" class="m-0">
+                            @Html.AntiForgeryToken()
+                            <button class="btn btn-adm-soft-primary btn-sm" title="@(c.IsPublished ? "Снять с публикации" : "Опубликовать")">
+                                <i class="ti @(c.IsPublished ? "ti-eye-off" : "ti-eye")"></i>
+                            </button>
+                        </form>
+                        <form method="post" action="/admin/courses/@c.Id/delete" class="m-0"
+                              onsubmit="return confirm('Удалить курс «@c.Title»?');">
+                            @Html.AntiForgeryToken()
+                            <button class="btn btn-adm-soft-danger btn-sm" title="Удалить">
+                                <i class="ti ti-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        }
+        @if (Model.Count == 0)
+        {
+            <tr><td colspan="7" class="text-center text-muted py-4">Курсов нет</td></tr>
+        }
+        </tbody>
+    </table>
+</div>

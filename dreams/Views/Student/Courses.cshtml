@@ -1,0 +1,65 @@
+@model IReadOnlyList<dreams.Models.Entities.Enrollment>
+@{
+    ViewData["Title"] = "Мои курсы";
+    ViewData["DashboardArea"] = "student";
+    Layout = "_DashboardLayout";
+}
+
+<div class="breadcrumb-bar text-center">
+    <div class="container">
+        <h2 class="breadcrumb-title mb-2">Мои курсы</h2>
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container">
+        @if (Model.Count == 0)
+        {
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="isax isax-book fs-1 text-muted mb-3 d-block"></i>
+                    <h5>Вы ещё не записаны ни на один курс</h5>
+                    <p class="text-muted">Загляните в каталог и выберите интересный курс.</p>
+                    <a href="/courses" class="btn btn-secondary mt-2">Открыть каталог</a>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4">
+                @foreach (var e in Model)
+                {
+                    var c = e.Course;
+                    <div class="col-xl-4 col-md-6">
+                        <div class="course-item-two course-item mx-0">
+                            <div class="course-img">
+                                <a href="/student/courses/@c.Slug">
+                                    <img src="@c.CoverUrl" alt="@c.Title" class="img-fluid">
+                                </a>
+                            </div>
+                            <div class="course-content">
+                                <span class="badge badge-light bg-light fs-13 mb-2">@c.Category.Name</span>
+                                <h6 class="title mb-2"><a href="/student/courses/@c.Slug">@c.Title</a></h6>
+                                <p class="text-muted fs-13 mb-2">@c.Instructor.FullName</p>
+
+                                <div class="d-flex justify-content-between fs-13 mb-1">
+                                    <span>Прогресс</span>
+                                    <span class="fw-semibold">@e.ProgressPercent.ToString("0.#")%</span>
+                                </div>
+                                <div class="progress mb-3" style="height: 6px;">
+                                    <div class="progress-bar bg-secondary" role="progressbar"
+                                         style="width: @e.ProgressPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"
+                                         aria-valuenow="@e.ProgressPercent" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+
+                                <a href="/student/courses/@c.Slug" class="btn btn-dark btn-sm w-100">
+                                    @(e.ProgressPercent == 0 ? "Начать обучение" : (e.CompletedAt != null ? "Курс пройден" : "Продолжить"))
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>

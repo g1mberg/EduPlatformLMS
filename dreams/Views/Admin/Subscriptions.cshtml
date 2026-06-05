@@ -1,0 +1,53 @@
+@model IReadOnlyList<dreams.Models.Entities.InstructorSubscription>
+@{
+    ViewData["Title"] = "Подписки";
+    ViewData["PageTitle"] = "Активные подписки инструкторов";
+    ViewData["AdminSection"] = "subscriptions";
+    Layout = "_AdminLayout";
+}
+
+<div class="adm-card">
+    <table class="adm-table">
+        <thead>
+            <tr><th>Инструктор</th><th>План</th><th>Активна с</th><th>Истекает</th><th>Статус</th><th class="text-end">Действия</th></tr>
+        </thead>
+        <tbody>
+        @foreach (var s in Model)
+        {
+            <tr>
+                <td>
+                    <div class="fw-semibold">@s.Instructor.Email</div>
+                    <div class="text-muted small">@s.Instructor.FullName</div>
+                </td>
+                <td><span class="adm-badge b-primary">@s.Plan.Code</span></td>
+                <td>@s.StartedAt.ToLocalTime().ToString("dd.MM.yyyy")</td>
+                <td>@(s.ExpiresAt.HasValue ? s.ExpiresAt.Value.ToLocalTime().ToString("dd.MM.yyyy") : "—")</td>
+                <td>
+                    @if (s.IsActive && (s.ExpiresAt == null || s.ExpiresAt > DateTime.UtcNow))
+                    {
+                        <span class="adm-badge b-success">Активна</span>
+                    }
+                    else
+                    {
+                        <span class="adm-badge b-muted">Завершена</span>
+                    }
+                </td>
+                <td class="text-end">
+                    @if (s.IsActive)
+                    {
+                        <form method="post" action="/admin/subscriptions/@s.Id/cancel" class="m-0"
+                              onsubmit="return confirm('Отменить подписку?');">
+                            @Html.AntiForgeryToken()
+                            <button class="btn btn-adm-soft-danger btn-sm">Отменить</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+        @if (Model.Count == 0)
+        {
+            <tr><td colspan="6" class="text-center text-muted py-5">Пока никто не оформил подписку</td></tr>
+        }
+        </tbody>
+    </table>
+</div>

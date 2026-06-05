@@ -1,0 +1,61 @@
+@model dreams.Models.Account.TwoFactorSetupViewModel
+@{
+    ViewData["Title"] = "Настройка 2FA";
+    ViewData["DashboardArea"] = "student";
+    Layout = "_DashboardLayout";
+    var qr = $"https://api.qrserver.com/v1/create-qr-code/?size=220x220&data={Uri.EscapeDataString(Model.AuthenticatorUri)}";
+}
+
+<div class="breadcrumb-bar text-center">
+    <div class="container">
+        <h2 class="breadcrumb-title mb-2">Настройка 2FA</h2>
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+
+                        <ol class="mb-4">
+                            <li class="mb-2">Установите приложение-аутентификатор (Google Authenticator, Microsoft Authenticator, 1Password, Authy).</li>
+                            <li class="mb-2">Отсканируйте QR-код или введите ключ вручную.</li>
+                            <li>Введите код, который покажет приложение.</li>
+                        </ol>
+
+                        <div class="row g-4 align-items-center mb-4">
+                            <div class="col-md-5 text-center">
+                                <img src="@qr" alt="QR" class="img-fluid border rounded p-2" style="max-width: 220px;">
+                            </div>
+                            <div class="col-md-7">
+                                <p class="mb-2">Или введите ключ вручную:</p>
+                                <p class="font-monospace fs-5 user-select-all p-2 border rounded bg-light mb-3">@Model.SharedKey</p>
+                                <p class="text-muted fs-13 mb-0">Алгоритм: SHA1 · цифр: 6 · период: 30 сек.</p>
+                            </div>
+                        </div>
+
+                        <form method="post" action="/account/2fa-setup">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" asp-for="SharedKey" />
+                            <input type="hidden" asp-for="AuthenticatorUri" />
+
+                            <div class="mb-3">
+                                <label asp-for="Code" class="form-label"></label>
+                                <input asp-for="Code" class="form-control form-control-lg" inputmode="numeric" autocomplete="one-time-code" placeholder="123 456" style="max-width: 240px;" />
+                                <span asp-validation-for="Code" class="text-danger small"></span>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-secondary">Включить 2FA</button>
+                                <a href="/account/security" class="btn btn-outline-secondary">Отмена</a>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

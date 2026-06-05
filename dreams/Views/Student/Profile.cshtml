@@ -1,0 +1,143 @@
+@{
+    ViewData["Title"] = "Профиль студента";
+    ViewData["DashboardArea"] = "student";
+    Layout = "_DashboardLayout";
+}
+
+<div class="breadcrumb-bar text-center">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12 col-12">
+                <h2 class="breadcrumb-title mb-2">Мой профиль</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb justify-content-center mb-0">
+                        <li class="breadcrumb-item"><a href="/">Главная</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Профиль</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="content">
+    <div class="container">
+
+        <div class="profile-card overflow-hidden bg-blue-gradient2 mb-5 p-5">
+            <div class="profile-card-bg">
+                <img src="~/assets/img/bg/card-bg-01.png" class="profile-card-bg-1" alt="">
+            </div>
+            <div class="row align-items-center row-gap-3">
+                <div class="col-lg-6">
+                    <div class="d-flex align-items-center flex-wrap gap-3">
+                        <span class="avatar avatar-xxl avatar-rounded border border-white border-2">
+                            <img src="~/assets/img/user/user-02.jpg" alt="">
+                        </span>
+                        <div>
+                            <h5 class="mb-1 text-white">Иван Петров</h5>
+                            <p class="text-light mb-0">Студент</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="d-flex align-items-center justify-content-lg-end flex-wrap gap-2">
+                        <a href="/instructor/profile" class="btn btn-white rounded-pill">Стать инструктором</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+
+            <div class="col-lg-3 theiaStickySidebar">
+                <div class="settings-sidebar">
+                    <h6 class="mb-3">Обучение</h6>
+                    <ul class="mb-3 pb-1">
+                        <li>
+                            <a href="/student/profile" class="d-inline-flex align-items-center active">
+                                <i class="fa-solid fa-user me-2"></i>Профиль
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/student/courses" class="d-inline-flex align-items-center">
+                                <i class="isax isax-teacher5 me-2"></i>Мои курсы
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/student/certificates" class="d-inline-flex align-items-center">
+                                <i class="isax isax-note-215 me-2"></i>Сертификаты
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/student/notifications" class="d-inline-flex align-items-center">
+                                <i class="isax isax-notification5 me-2"></i>Уведомления
+                            </a>
+                        </li>
+                    </ul>
+                    <hr>
+                    <h6 class="mb-3">Аккаунт</h6>
+                    <ul>
+                        <li>
+                            <form method="post" action="/account/logout" class="m-0">
+                                <button type="submit" class="btn btn-link p-0 d-inline-flex align-items-center text-decoration-none">
+                                    <i class="isax isax-logout5 me-2"></i>Выйти
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-lg-9">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                    <h5 class="fw-bold mb-0">Профиль</h5>
+                    <a href="#" class="btn btn-outline-primary btn-sm">
+                        <i class="isax isax-edit-2 me-1"></i>Редактировать
+                    </a>
+                </div>
+
+                <div class="card shadow-sm mb-3">
+                    <div class="card-body">
+                        <h5 class="mb-3 fs-18">Основные данные</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <h6>Имя</h6>
+                                <p class="mb-0">Иван Петров</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Email</h6>
+                                <p class="mb-0">ivan.petrov@example.com</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Дата регистрации</h6>
+                                <p class="mb-0">16 января 2026</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>2FA</h6>
+                                <p class="mb-0"><span class="badge bg-success">Включено</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mb-3">
+                    <div class="card-body">
+                        <h5 class="mb-3">О себе</h5>
+                        <p class="mb-0">
+                            Изучаю веб-разработку и data science. Прохожу курсы по C#, ASP.NET и SQL.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="mb-3">Безопасность</h5>
+                        <a href="#" class="btn btn-outline-primary me-2">Сменить пароль</a>
+                        <a href="#" class="btn btn-outline-secondary">Настройки 2FA</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

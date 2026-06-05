@@ -1,0 +1,167 @@
+@model dreams.Models.Courses.CourseDetailsViewModel
+@{
+    var c = Model.Course;
+    ViewData["Title"] = c.Title;
+    Layout = "_InnerLayout";
+
+    string PriceLabel(decimal p) => p == 0 ? "Бесплатно" : $"{p:N0} ₽";
+    var toast = TempData["Toast"] as string;
+}
+
+<div class="breadcrumb-bar text-center">
+    <div class="container">
+        <h2 class="breadcrumb-title mb-2">@c.Title</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb justify-content-center mb-0">
+                <li class="breadcrumb-item"><a href="/">Главная</a></li>
+                <li class="breadcrumb-item"><a href="/courses">Курсы</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@c.Title</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<section class="course-details-two">
+    <div class="container">
+        @if (!string.IsNullOrEmpty(toast))
+        {
+            <div class="alert alert-info">@toast</div>
+        }
+        @if (!c.IsPublished)
+        {
+            <div class="alert alert-warning">Этот курс не опубликован. Вы видите его как владелец.</div>
+        }
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card bg-light">
+                    <div class="card-body d-lg-flex align-items-center">
+                        <img class="img-fluid rounded-2" src="@c.CoverUrl" alt="@c.Title" style="max-width: 320px;">
+                        <div class="w-100 ps-lg-4 mt-3 mt-lg-0">
+                            <span class="badge badge-sm rounded-pill bg-warning fs-12 mb-2">@c.Category.Name</span>
+                            <h3 class="mb-2">@c.Title</h3>
+                            <p class="fs-14 mb-3">@c.Description</p>
+                            <div class="d-flex align-items-center gap-3 flex-wrap mb-3">
+                                <span class="d-flex align-items-center"><i class="isax isax-book me-2"></i>@Model.LessonsCount уроков</span>
+                                <span class="d-flex align-items-center"><i class="isax isax-people me-2"></i>@c.StudentsCount студентов</span>
+                                <span class="d-flex align-items-center"><i class="fa-solid fa-star text-warning me-2"></i>@c.AverageRating.ToString("0.0")</span>
+                                <span class="d-flex align-items-center"><i class="isax isax-global me-2"></i>@(c.Language == "ru" ? "Русский" : "English")</span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="avatar avatar-md">
+                                    <img class="rounded-circle" src="@(string.IsNullOrEmpty(c.Instructor.AvatarUrl) ? "/assets/img/user/user-29.jpg" : c.Instructor.AvatarUrl)" alt="">
+                                </span>
+                                <div class="ms-2">
+                                    <div class="fw-semibold">@c.Instructor.FullName</div>
+                                    <div class="fs-13 text-muted">Инструктор</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="mb-3">Описание курса</h5>
+                        <p class="mb-0">@c.Description</p>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between flex-wrap">
+                            <h5 class="subs-title mb-3">Программа курса</h5>
+                            <h6 class="fs-16 fw-medium text-gray-7 mb-3">
+                                @c.Sections.Count модулей · @Model.LessonsCount уроков
+                            </h6>
+                        </div>
+
+                        @if (c.Sections.Count == 0)
+                        {
+                            <p class="text-muted mb-0">Программа курса пока не добавлена.</p>
+                        }
+                        else
+                        {
+                            <div class="accordion accordion-customicon1 accordions-items-seperate p-0" id="programAccordion">
+                                @foreach (var sec in c.Sections.OrderBy(s => s.OrderIndex))
+                                {
+                                    var sId = "sec-" + sec.Id.ToString("N");
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button collapsed" type="button"
+                                                    data-bs-toggle="collapse" data-bs-target="#@sId">
+                                                @sec.Title <i class="fa-solid fa-chevron-down"></i>
+                                            </button>
+                                        </h2>
+                                        <div id="@sId" class="accordion-collapse collapse" data-bs-parent="#programAccordion">
+                                            <div class="accordion-body p-0">
+                                                <ul class="list-unstyled mb-0">
+                                                    @foreach (var lesson in sec.Lessons.OrderBy(l => l.OrderIndex))
+                                                    {
+                                                        <li class="p-3 d-flex justify-content-between align-items-center border-bottom">
+                                                            <span><i class="isax isax-play-circle me-2 text-secondary"></i>@lesson.Title</span>
+                                                            @if (Model.IsEnrolled)
+                                                            {
+                                                                <a href="/student/courses/@c.Slug/lessons/@lesson.Id" class="link-secondary fs-14">Перейти</a>
+                                                            }
+                                                        </li>
+                                                    }
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="course-sidebar-sec mt-0">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h2 class="@(c.Price == 0 ? "text-success" : "text-secondary") fs-30 mb-0">@PriceLabel(c.Price)</h2>
+                            </div>
+
+                            @if (Model.IsOwner)
+                            {
+                                <a href="/instructor/courses/@c.Id/edit" class="btn btn-primary w-100">Редактировать курс</a>
+                            }
+                            else if (Model.IsEnrolled)
+                            {
+                                <a href="/student/courses/@c.Slug" class="btn btn-primary w-100">Перейти к обучению</a>
+                            }
+                            else if (User?.Identity?.IsAuthenticated == true)
+                            {
+                                <form method="post" action="/courses/@c.Slug/enroll" class="m-0">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-primary w-100">Записаться на курс</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <a href="/account/login?returnUrl=/courses/@c.Slug" class="btn btn-primary w-100">Войти, чтобы записаться</a>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="subs-title mb-3">Включено в курс</h5>
+                            <p class="mb-2"><i class="isax isax-play-circle me-2 text-secondary"></i>@Model.LessonsCount видеоуроков</p>
+                            <p class="mb-2"><i class="isax isax-document me-2 text-secondary"></i>Текстовые материалы</p>
+                            <p class="mb-2"><i class="isax isax-clock me-2 text-secondary"></i>Доступ навсегда</p>
+                            <p class="mb-0"><i class="isax isax-medal me-2 text-secondary"></i>Сертификат при завершении</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

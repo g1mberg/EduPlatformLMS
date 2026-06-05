@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="Nav.Home"><value>Home</value></data>
+  <data name="Nav.Courses"><value>Courses</value></data>
+  <data name="Nav.Subscriptions"><value>Subscriptions</value></data>
+  <data name="Nav.Login"><value>Sign in</value></data>
+  <data name="Nav.Register"><value>Sign up</value></data>
+  <data name="Nav.MyProfile"><value>My profile</value></data>
+  <data name="Nav.MyCoursesStudent"><value>My courses (student)</value></data>
+  <data name="Nav.MyCoursesInstructor"><value>My courses (instructor)</value></data>
+  <data name="Nav.Subscription"><value>Subscription</value></data>
+  <data name="Nav.Security"><value>Security</value></data>
+  <data name="Nav.Logout"><value>Sign out</value></data>
+  <data name="Nav.BackToSite"><value>Back to site</value></data>
+
+  <data name="Auth.LoginTitle"><value>Sign in</value></data>
+  <data name="Auth.RegisterTitle"><value>Sign up</value></data>
+  <data name="Auth.Email"><value>Email</value></data>
+  <data name="Auth.Password"><value>Password</value></data>
+  <data name="Auth.ConfirmPassword"><value>Confirm password</value></data>
+  <data name="Auth.FullName"><value>Full name</value></data>
+  <data name="Auth.RememberMe"><value>Remember me</value></data>
+  <data name="Auth.LoginButton"><value>Sign in</value></data>
+  <data name="Auth.RegisterButton"><value>Create account</value></data>
+  <data name="Auth.NoAccount"><value>No account yet?</value></data>
+  <data name="Auth.HaveAccount"><value>Already have an account?</value></data>
+  <data name="Auth.ForgotPassword"><value>Forgot password?</value></data>
+
+  <data name="Catalog.Title"><value>Course catalog</value></data>
+  <data name="Catalog.Search"><value>Search</value></data>
+  <data name="Catalog.Filters"><value>Filters</value></data>
+  <data name="Catalog.Reset"><value>Reset</value></data>
+  <data name="Catalog.Categories"><value>Categories</value></data>
+  <data name="Catalog.AllCategories"><value>All categories</value></data>
+  <data name="Catalog.Price"><value>Price</value></data>
+  <data name="Catalog.PriceAll"><value>All</value></data>
+  <data name="Catalog.PriceFree"><value>Free</value></data>
+  <data name="Catalog.PricePaid"><value>Paid</value></data>
+  <data name="Catalog.SortNew"><value>Newest first</value></data>
+  <data name="Catalog.SortRating"><value>By rating</value></data>
+  <data name="Catalog.SortPopular"><value>By popularity</value></data>
+  <data name="Catalog.SortPriceAsc"><value>Price: low to high</value></data>
+  <data name="Catalog.SortPriceDesc"><value>Price: high to low</value></data>
+  <data name="Catalog.ShowingOf"><value>Showing {0}–{1} of {2}</value></data>
+  <data name="Catalog.NothingFound"><value>Nothing found</value></data>
+  <data name="Catalog.Details"><value>Details</value></data>
+  <data name="Catalog.Free"><value>Free</value></data>
+
+  <data name="Common.Cancel"><value>Cancel</value></data>
+  <data name="Common.Save"><value>Save</value></data>
+  <data name="Common.Delete"><value>Delete</value></data>
+  <data name="Common.Edit"><value>Edit</value></data>
+  <data name="Common.Yes"><value>Yes</value></data>
+  <data name="Common.No"><value>No</value></data>
+</root>

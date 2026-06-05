@@ -1,0 +1,169 @@
+@{
+    ViewData["Title"] = "Профиль инструктора";
+    ViewData["DashboardArea"] = "instructor";
+    Layout = "_DashboardLayout";
+}
+
+<div class="breadcrumb-bar text-center">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12 col-12">
+                <h2 class="breadcrumb-title mb-2">Профиль инструктора</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb justify-content-center mb-0">
+                        <li class="breadcrumb-item"><a href="/">Главная</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Профиль</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="content">
+    <div class="container">
+
+        <div class="instructor-profile mb-4">
+            <div class="instructor-profile-bg">
+                <img src="~/assets/img/bg/card-bg-01.png" class="instructor-profile-bg-1" alt="">
+            </div>
+            <div class="row align-items-center row-gap-3">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <span class="avatar flex-shrink-0 avatar-xxl avatar-rounded me-3 border border-white border-3">
+                            <img src="~/assets/img/user/user-01.jpg" alt="img">
+                        </span>
+                        <div>
+                            <h5 class="mb-1 text-white">Анна Соколова</h5>
+                            <p class="text-light mb-1">Инструктор</p>
+                            <span class="badge bg-warning text-dark">Подписка: Basic</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center flex-wrap gap-3 justify-content-md-end">
+                        <a href="/instructor/courses/new/edit" class="btn btn-white rounded-pill">Создать курс</a>
+                        <a href="/student/profile" class="btn btn-secondary rounded-pill">Кабинет студента</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+
+            <div class="col-lg-3 theiaStickySidebar">
+                <div class="settings-sidebar mb-lg-0">
+                    <h6 class="mb-3">Инструктор</h6>
+                    <ul class="mb-3 pb-1">
+                        <li>
+                            <a href="/instructor/profile" class="d-inline-flex align-items-center active">
+                                <i class="fa-solid fa-user me-2"></i>Профиль
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/instructor/courses" class="d-inline-flex align-items-center">
+                                <i class="isax isax-teacher5 me-2"></i>Мои курсы
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/instructor/subscription" class="d-inline-flex align-items-center">
+                                <i class="isax isax-crown5 me-2"></i>Подписка
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/instructor/earnings" class="d-inline-flex align-items-center">
+                                <i class="isax isax-wallet-add5 me-2"></i>Доход
+                            </a>
+                        </li>
+                    </ul>
+                    <hr>
+                    <h6 class="mb-3">Аккаунт</h6>
+                    <ul>
+                        <li>
+                            <form method="post" action="/account/logout" class="m-0">
+                                <button type="submit" class="btn btn-link p-0 d-inline-flex align-items-center text-decoration-none">
+                                    <i class="isax isax-logout5 me-2"></i>Выйти
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-lg-9">
+                <div class="page-title d-flex align-items-center justify-content-between">
+                    <h5 class="fw-bold">Профиль</h5>
+                    <a href="#" class="btn btn-outline-primary btn-sm">
+                        <i class="isax isax-edit-2 me-1"></i>Редактировать
+                    </a>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="fs-18 pb-3 border-bottom mb-3">Основные данные</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6>Имя</h6>
+                                    <span>Анна Соколова</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6>Email</h6>
+                                    <span>anna.sokolova@example.com</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6>Дата регистрации</h6>
+                                    <span>5 марта 2026</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6>2FA</h6>
+                                    <span class="badge bg-success">Включено</span>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div>
+                                    <h6>О себе</h6>
+                                    <span>Веб-разработчик с 10-летним опытом. Преподаю C#, ASP.NET и архитектурные паттерны.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="fs-18 pb-3 border-bottom mb-3">Подписка и кредиты</h5>
+                        <div class="row g-3 align-items-center">
+                            <div class="col-md-4">
+                                <h6>Текущий план</h6>
+                                <p class="mb-0"><span class="badge bg-warning text-dark">Basic</span> — 10 курсов, комиссия 20%</p>
+                            </div>
+                            <div class="col-md-4">
+                                <h6>Баланс кредитов</h6>
+                                <p class="mb-0 fs-18 fw-semibold">250 кр.</p>
+                            </div>
+                            <div class="col-md-4 text-md-end">
+                                <a href="/instructor/subscription" class="btn btn-outline-primary">Сменить план</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-0">
+                    <div class="card-body">
+                        <h5 class="fs-18 pb-3 border-bottom mb-3">Безопасность</h5>
+                        <a href="#" class="btn btn-outline-primary me-2">Сменить пароль</a>
+                        <a href="#" class="btn btn-outline-secondary">Настройки 2FA</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

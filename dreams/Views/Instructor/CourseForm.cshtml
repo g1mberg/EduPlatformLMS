@@ -1,0 +1,110 @@
+@model dreams.Models.Courses.CourseFormViewModel
+@{
+    var isEdit = Model.Id.HasValue;
+    ViewData["Title"] = isEdit ? "Редактирование курса" : "Новый курс";
+    ViewData["DashboardArea"] = "instructor";
+    Layout = "_DashboardLayout";
+
+    var formAction = isEdit
+        ? $"/instructor/courses/{Model.Id}/edit"
+        : "/instructor/courses/new";
+}
+
+<div class="breadcrumb-bar text-center">
+    <div class="container">
+        <h2 class="breadcrumb-title mb-2">@ViewData["Title"]</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb justify-content-center mb-0">
+                <li class="breadcrumb-item"><a href="/">Главная</a></li>
+                <li class="breadcrumb-item"><a href="/instructor/courses">Мои курсы</a></li>
+                <li class="breadcrumb-item active">@(isEdit ? "Редактирование" : "Новый")</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+
+                        <form method="post" action="@formAction">
+                            @Html.AntiForgeryToken()
+                            <div asp-validation-summary="ModelOnly" class="alert alert-danger" style="display:@(ViewData.ModelState.ErrorCount > 0 ? "block" : "none")"></div>
+
+                            <div class="mb-3">
+                                <label asp-for="Title" class="form-label"></label>
+                                <input asp-for="Title" class="form-control form-control-lg" placeholder="Например, Полный курс Python" />
+                                <span asp-validation-for="Title" class="text-danger small"></span>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="Slug" class="form-label"></label>
+                                    <input asp-for="Slug" class="form-control" placeholder="оставьте пустым для авто" />
+                                    <div class="form-text">Латиница, цифры, дефис. Сгенерируется из названия, если пусто.</div>
+                                    <span asp-validation-for="Slug" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="CategoryId" class="form-label"></label>
+                                    <select asp-for="CategoryId" class="form-select"
+                                            asp-items="@(new SelectList(Model.AvailableCategories, "Id", "Name"))">
+                                        <option value="">— Выберите —</option>
+                                    </select>
+                                    <span asp-validation-for="CategoryId" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Description" class="form-label"></label>
+                                <textarea asp-for="Description" rows="5" class="form-control"
+                                          placeholder="Расскажите, что студент узнает на курсе"></textarea>
+                                <span asp-validation-for="Description" class="text-danger small"></span>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="Price" class="form-label"></label>
+                                    <input asp-for="Price" type="number" min="0" step="100" class="form-control" />
+                                    <div class="form-text">0 — бесплатный курс.</div>
+                                    <span asp-validation-for="Price" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="Language" class="form-label"></label>
+                                    <select asp-for="Language" class="form-select">
+                                        <option value="ru">Русский</option>
+                                        <option value="en">English</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="CoverUrl" class="form-label"></label>
+                                <input asp-for="CoverUrl" class="form-control" placeholder="/assets/img/course/course-01.jpg или https://..." />
+                                <div class="form-text">Пока без загрузки файлов — укажите URL.</div>
+                                <span asp-validation-for="CoverUrl" class="text-danger small"></span>
+                            </div>
+
+                            <div class="form-check mb-4">
+                                <input asp-for="IsPublished" class="form-check-input" />
+                                <label asp-for="IsPublished" class="form-check-label">
+                                    Опубликовать (виден в каталоге)
+                                </label>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-secondary">
+                                    @(isEdit ? "Сохранить изменения" : "Создать курс")
+                                </button>
+                                <a href="/instructor/courses" class="btn btn-outline-secondary">Отмена</a>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,175 @@
+@{
+    var title = ViewData["Title"] as string;
+    var area = ViewData["DashboardArea"] as string ?? "student"; // "student" или "instructor"
+}
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@(string.IsNullOrEmpty(title) ? "EduPlatform LMS" : $"{title} | EduPlatform LMS")</title>
+
+    <link rel="shortcut icon" href="~/assets/img/favicon.png">
+    <link rel="apple-touch-icon" href="~/assets/img/apple-icon.png">
+
+    <script src="~/assets/js/theme-script.js"></script>
+
+    <link rel="stylesheet" href="~/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="~/assets/plugins/swiper/css/swiper-bundle.min.css">
+    <link rel="stylesheet" href="~/assets/plugins/fontawesome/css/fontawesome.min.css">
+    <link rel="stylesheet" href="~/assets/plugins/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="~/assets/plugins/select2/css/select2.min.css">
+    <link rel="stylesheet" href="~/assets/plugins/slick/slick.css">
+    <link rel="stylesheet" href="~/assets/plugins/slick/slick-theme.css">
+    <link rel="stylesheet" href="~/assets/plugins/feather/feather.css">
+    <link rel="stylesheet" href="~/assets/plugins/aos/aos.css">
+    <link rel="stylesheet" href="~/assets/plugins/tabler-icons/tabler-icons.css">
+    <link rel="stylesheet" href="~/assets/css/iconsax.css">
+    <link rel="stylesheet" href="~/assets/plugins/fancybox/jquery.fancybox.min.css">
+    <link rel="stylesheet" href="~/assets/css/style.css">
+
+    <style>
+        .header-two .main-nav > li { margin: 0 14px; }
+        .header-two .main-nav > li > a { font-weight: 500; }
+        @@media (min-width: 992px) {
+            .header-two .header-nav {
+                display: grid !important;
+                grid-template-columns: 1fr auto 1fr;
+                align-items: center;
+            }
+            .header-two .main-menu-wrapper { justify-content: center; }
+            .header-two .header-btn { justify-self: end; }
+        }
+        .lang-switch { display: inline-flex; align-items: center; gap: 4px; padding: 8px 12px; border-radius: 8px; }
+        .lang-switch:hover { background: rgba(0,0,0,.05); }
+    </style>
+
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+
+<body>
+    <div class="main-wrapper">
+
+        <header class="header-two">
+            <div class="container">
+                <div class="header-nav">
+                    <div class="navbar-header">
+                        <a id="mobile_btn" href="#">
+                            <span class="bar-icon"><i class="isax isax-menu"></i></span>
+                        </a>
+                        <div class="navbar-logo">
+                            <a class="logo-white header-logo" href="@Url.Action("Index", "Home")">
+                                <img src="~/assets/img/logo.svg" class="logo" alt="EduPlatform">
+                            </a>
+                            <a class="logo-dark header-logo" href="@Url.Action("Index", "Home")">
+                                <img src="~/assets/img/logo.svg" class="logo" alt="EduPlatform">
+                            </a>
+                        </div>
+                    </div>
+                    <div class="main-menu-wrapper">
+                        <div class="menu-header">
+                            <a href="@Url.Action("Index", "Home")" class="menu-logo">
+                                <img src="~/assets/img/logo.svg" class="img-fluid" alt="EduPlatform">
+                            </a>
+                            <button type="button" id="menu_close" class="menu-close" aria-label="close">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <ul class="main-nav">
+                            <li><a href="@Url.Action("Index", "Home")">@L["Nav.Home"]</a></li>
+                            <li><a href="/courses">@L["Nav.Courses"]</a></li>
+                            @if (area == "instructor")
+                            {
+                                <li class="active"><a href="/instructor/profile">Кабинет инструктора</a></li>
+                                <li><a href="/student/profile">Кабинет студента</a></li>
+                            }
+                            else
+                            {
+                                <li class="active"><a href="/student/profile">Кабинет студента</a></li>
+                                <li><a href="/instructor/profile">Стать инструктором</a></li>
+                            }
+                        </ul>
+                    </div>
+                    <div class="header-btn d-flex align-items-center">
+                        <div class="icon-btn">
+                            <a href="/student/notifications" aria-label="notifications">
+                                <i class="isax isax-notification5"></i>
+                            </a>
+                        </div>
+                        <div class="icon-btn">
+                            <a href="/cart" class="position-relative" aria-label="cart">
+                                <i class="isax isax-shopping-cart5"></i>
+                                <span class="count-icon bg-success p-1 rounded-pill text-white fs-10 fw-bold">0</span>
+                            </a>
+                        </div>
+                        <div class="dropdown me-2">
+                            <a href="#" class="lang-switch text-reset text-decoration-none" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="fw-medium">@(System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToUpper())</span>
+                                <i class="fas fa-chevron-down fs-10"></i>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end p-2 mt-2">
+                                <li><a class="dropdown-item rounded" href="/language/set?culture=ru&returnUrl=@Uri.EscapeDataString(Context.Request.Path + Context.Request.QueryString)">Русский</a></li>
+                                <li><a class="dropdown-item rounded" href="/language/set?culture=en&returnUrl=@Uri.EscapeDataString(Context.Request.Path + Context.Request.QueryString)">English</a></li>
+                            </ul>
+                        </div>
+                        <div class="dropdown profile-dropdown">
+                            <a href="#" class="dropdown-toggle d-inline-flex align-items-center" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="avatar avatar-md avatar-rounded">
+                                    <img src="~/assets/img/user/user-01.jpg" alt="user">
+                                </span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end p-2 mt-2">
+                                <li><a class="dropdown-item rounded" href="/student/profile"><i class="isax isax-user me-2"></i>@L["Nav.MyProfile"]</a></li>
+                                <li><a class="dropdown-item rounded" href="/student/courses"><i class="isax isax-book me-2"></i>@L["Nav.MyCoursesStudent"]</a></li>
+                                <li><a class="dropdown-item rounded" href="/instructor/courses"><i class="isax isax-teacher me-2"></i>@L["Nav.MyCoursesInstructor"]</a></li>
+                                <li><a class="dropdown-item rounded" href="/instructor/subscription"><i class="isax isax-crown me-2"></i>@L["Nav.Subscription"]</a></li>
+                                <li><a class="dropdown-item rounded" href="/account/security"><i class="isax isax-shield-tick me-2"></i>@L["Nav.Security"]</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="post" action="/account/logout" class="m-0">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="dropdown-item rounded"><i class="isax isax-logout me-2"></i>@L["Nav.Logout"]</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        @RenderBody()
+
+        <footer class="footer">
+            <div class="footer-bottom">
+                <div class="container">
+                    <div class="row row-gap-2">
+                        <div class="col-lg-8">
+                            <p>© @DateTime.Now.Year <span class="text-secondary">EduPlatform LMS</span>. Все права защищены.</p>
+                        </div>
+                        <div class="col-lg-4 text-lg-end">
+                            <a href="#" class="me-3">Поддержка</a>
+                            <a href="#">Контакты</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="~/assets/js/jquery-3.7.1.min.js"></script>
+    <script src="~/assets/js/bootstrap.bundle.min.js"></script>
+    <script src="~/assets/plugins/select2/js/select2.min.js"></script>
+    <script src="~/assets/plugins/slick/slick.js"></script>
+    <script src="~/assets/plugins/swiper/js/swiper-bundle.min.js"></script>
+    <script src="~/assets/js/counter.js"></script>
+    <script src="~/assets/plugins/aos/aos.js"></script>
+    <script src="~/assets/plugins/fancybox/jquery.fancybox.min.js"></script>
+    <script src="~/assets/js/script.js"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+
+</html>

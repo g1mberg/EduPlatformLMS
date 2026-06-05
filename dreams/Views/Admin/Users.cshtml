@@ -1,0 +1,118 @@
+@model IReadOnlyList<dreams.Models.Entities.ApplicationUser>
+@{
+    ViewData["Title"] = "Пользователи";
+    ViewData["PageTitle"] = "Пользователи";
+    ViewData["AdminSection"] = "users";
+    Layout = "_AdminLayout";
+
+    var roleMap = (Dictionary<Guid, string[]>)ViewData["Roles"]!;
+    var q = ViewData["Q"] as string;
+    var roleFilter = ViewData["RoleFilter"] as string;
+    var blockedFilter = ViewData["BlockedFilter"] as string;
+}
+
+<div class="adm-card mb-3">
+    <div class="adm-card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label small text-muted mb-1">Поиск (email или имя)</label>
+                <input name="q" value="@q" class="form-control" placeholder="@@example.com">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">Роль</label>
+                <select name="role" class="form-select">
+                    <option value="">Все</option>
+                    <option value="Student"    selected="@(roleFilter == "Student")">Student</option>
+                    <option value="Instructor" selected="@(roleFilter == "Instructor")">Instructor</option>
+                    <option value="Admin"      selected="@(roleFilter == "Admin")">Admin</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">Блокировка</label>
+                <select name="blocked" class="form-select">
+                    <option value="">Любые</option>
+                    <option value="yes" selected="@(blockedFilter == "yes")">Только заблокированные</option>
+                    <option value="no"  selected="@(blockedFilter == "no")">Без блокировки</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button class="btn btn-adm-primary w-100">Найти</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="adm-card">
+    <table class="adm-table">
+        <thead>
+            <tr>
+                <th>Email / Имя</th>
+                <th>Роль</th>
+                <th class="text-end">Кредиты</th>
+                <th>Статус</th>
+                <th class="text-end">Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var u in Model)
+        {
+            var roles = roleMap.TryGetValue(u.Id, out var rr) ? rr : Array.Empty<string>();
+            var initial = string.IsNullOrEmpty(u.FullName) ? u.Email!.Substring(0, 1).ToUpper() : u.FullName.Substring(0, 1).ToUpper();
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="adm-avatar-sm">@initial</span>
+                        <div>
+                            <div class="fw-semibold">@u.Email</div>
+                            <div class="text-muted small">@u.FullName</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    @foreach (var r in roles)
+                    {
+                        <span class="adm-badge b-primary me-1">@r</span>
+                    }
+                </td>
+                <td class="text-end fw-semibold">@u.Credits.ToString("N0")</td>
+                <td>
+                    @if (u.IsBlocked)
+                    {
+                        <span class="adm-badge b-danger">Заблокирован</span>
+                    }
+                    else if (!u.EmailConfirmed)
+                    {
+                        <span class="adm-badge b-warning">Email не подтв.</span>
+                    }
+                    else
+                    {
+                        <span class="adm-badge b-success">Активен</span>
+                    }
+                </td>
+                <td class="text-end">
+                    <div class="d-inline-flex align-items-center gap-2">
+                        <form method="post" action="/admin/users/@u.Id/credits" class="d-inline-flex align-items-center gap-1 m-0">
+                            @Html.AntiForgeryToken()
+                            <input type="number" name="amount" min="-100000" max="100000" step="100" value="100" class="form-control form-control-sm" style="width:90px;">
+                            <button class="btn btn-adm-soft-primary btn-sm" title="Начислить кредиты">
+                                <i class="ti ti-coin"></i>
+                            </button>
+                        </form>
+                        <form method="post" action="/admin/users/@u.Id/block" class="m-0"
+                              onsubmit="return confirm('@(u.IsBlocked ? "Разблокировать" : "Заблокировать") @u.Email?');">
+                            @Html.AntiForgeryToken()
+                            <button class="btn @(u.IsBlocked ? "btn-adm-soft-success" : "btn-adm-soft-danger") btn-sm" title="@(u.IsBlocked ? "Разблокировать" : "Заблокировать")">
+                                <i class="ti @(u.IsBlocked ? "ti-lock-open" : "ti-lock")"></i>
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        }
+        @if (Model.Count == 0)
+        {
+            <tr><td colspan="5" class="text-center text-muted py-4">Никого не найдено</td></tr>
+        }
+        </tbody>
+    </table>
+</div>

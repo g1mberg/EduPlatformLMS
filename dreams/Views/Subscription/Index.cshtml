@@ -1,0 +1,157 @@
+@{
+    ViewData["Title"] = "Подписки";
+    Layout = "_InnerLayout";
+}
+
+@section Styles {
+    <style>
+        .pricing-cover .pricing-item { position: relative; }
+        .pricing-cover .badge-recommend {
+            position: absolute;
+            top: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 6px 16px;
+            border-radius: 999px;
+            background: var(--primary);
+            color: #fff;
+            font-weight: 600;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+    </style>
+}
+
+<div class="breadcrumb-bar text-center">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12 col-12">
+                <h2 class="breadcrumb-title mb-2">Подписки для инструкторов</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb justify-content-center mb-0">
+                        <li class="breadcrumb-item"><a href="/">Главная</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Подписки</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="pricing-plan-sec">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-6 mx-auto">
+                <div class="text-center mb-4">
+                    <p class="fw-medium text-secondary mb-2">Выбирайте уровень</p>
+                    <h2 class="main-title mb-2">Три плана для инструкторов</h2>
+                    <p>Оплата производится виртуальными кредитами, которые пополняются вручную через личный кабинет. Чем выше план — тем больше курсов и ниже комиссия платформы.</p>
+                </div>
+            </div>
+        </div>
+        <div class="row pricing-cover justify-content-center">
+
+            <div class="col-xl-4 col-md-6 px-2 d-flex">
+                <div class="pricing-item flex-fill">
+                    <h5 class="mb-2">Free</h5>
+                    <h1 class="mb-2">Бесплатно</h1>
+                    <p>Для тех, кто только пробует себя в роли инструктора.</p>
+                    <div class="border-top pt-3 mt-3">
+                        <p class="d-flex align-items-center mb-3"><i class="fa-solid fa-circle fs-5 me-2"></i>До 3 активных курсов</p>
+                        <p class="d-flex align-items-center mb-3"><i class="fa-solid fa-circle fs-5 me-2"></i>Комиссия платформы 30%</p>
+                        <p class="d-flex align-items-center mb-3 text-muted"><i class="fa-solid fa-circle fs-5 me-2"></i>Без тестов и сертификатов</p>
+                        <p class="d-flex align-items-center mb-3"><i class="fa-solid fa-circle fs-5 me-2"></i>Базовая аналитика</p>
+                        <a href="#" class="btn btn-start-free w-100">Начать бесплатно</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-4 col-md-6 px-2 d-flex">
+                <div class="pricing-item flex-fill border border-primary">
+                    <span class="badge-recommend">Рекомендуем</span>
+                    <h5 class="mb-2">Basic</h5>
+                    <h1 class="mb-2">100 <sup class="fs-24 ms-1">кредитов</sup></h1>
+                    <p>Подходит инструкторам с растущим портфелем курсов.</p>
+                    <div class="border-top pt-3 mt-3">
+                        <p class="d-flex align-items-center mb-3"><i class="fa-solid fa-circle fs-5 me-2"></i>До 10 активных курсов</p>
+                        <p class="d-flex align-items-center mb-3"><i class="fa-solid fa-circle fs-5 me-2"></i>Комиссия платформы 20%</p>
+                        <p class="d-flex align-items-center mb-3"><i class="fa-solid fa-circle fs-5 me-2"></i>Создание тестов</p>
+                        <p class="d-flex align-items-center mb-3"><i class="fa-solid fa-circle fs-5 me-2"></i>Выдача сертификатов</p>
+                        <a href="#" class="btn btn-primary w-100">Оформить за 100 кредитов</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-4 col-md-6 px-2 d-flex">
+                <div class="pricing-item flex-fill">
+                    <h5 class="mb-2">Pro</h5>
+                    <h1 class="mb-2">300 <sup class="fs-24 ms-1">кредитов</sup></h1>
+                    <p>Для опытных инструкторов и команд, делающих много курсов.</p>
+                    <div class="border-top pt-3 mt-3">
+                        <p class="d-flex align-items-center mb-3"><i class="fa-solid fa-circle fs-5 me-2"></i>Без ограничений на курсы</p>
+                        <p class="d-flex align-items-center mb-3"><i class="fa-solid fa-circle fs-5 me-2"></i>Комиссия платформы 10%</p>
+                        <p class="d-flex align-items-center mb-3"><i class="fa-solid fa-circle fs-5 me-2"></i>Все возможности Basic</p>
+                        <p class="d-flex align-items-center mb-3"><i class="fa-solid fa-circle fs-5 me-2"></i>Расширенная аналитика</p>
+                        <a href="#" class="btn btn-start-free w-100">Оформить за 300 кредитов</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="row mt-5">
+            <div class="col-lg-10 mx-auto">
+                <div class="table-responsive">
+                    <table class="table table-price">
+                        <thead>
+                            <tr>
+                                <th class="bg-transparent"></th>
+                                <th class="bg-primary-100 text-primary text-center">Free</th>
+                                <th class="bg-primary-100 text-primary text-center">Basic</th>
+                                <th class="bg-primary-100 text-primary text-center">Pro</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Максимум курсов</td>
+                                <td class="text-center">3</td>
+                                <td class="text-center">10</td>
+                                <td class="text-center">∞</td>
+                            </tr>
+                            <tr>
+                                <td>Комиссия платформы</td>
+                                <td class="text-center">30%</td>
+                                <td class="text-center">20%</td>
+                                <td class="text-center">10%</td>
+                            </tr>
+                            <tr>
+                                <td>Создание тестов</td>
+                                <td class="text-center"><i class="isax isax-close-circle5 fs-24 text-danger"></i></td>
+                                <td class="text-center"><i class="isax isax-tick-circle5 fs-24 text-success"></i></td>
+                                <td class="text-center"><i class="isax isax-tick-circle5 fs-24 text-success"></i></td>
+                            </tr>
+                            <tr>
+                                <td>Сертификаты студентам</td>
+                                <td class="text-center"><i class="isax isax-close-circle5 fs-24 text-danger"></i></td>
+                                <td class="text-center"><i class="isax isax-tick-circle5 fs-24 text-success"></i></td>
+                                <td class="text-center"><i class="isax isax-tick-circle5 fs-24 text-success"></i></td>
+                            </tr>
+                            <tr>
+                                <td>Аналитика по курсам</td>
+                                <td class="text-center">Базовая</td>
+                                <td class="text-center">Базовая</td>
+                                <td class="text-center">Расширенная</td>
+                            </tr>
+                            <tr>
+                                <td>Стоимость подписки</td>
+                                <td class="text-center">Бесплатно</td>
+                                <td class="text-center">100 кредитов</td>
+                                <td class="text-center">300 кредитов</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

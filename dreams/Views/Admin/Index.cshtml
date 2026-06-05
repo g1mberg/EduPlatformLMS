@@ -1,0 +1,99 @@
+@model dreams.Controllers.AdminDashboardVm
+@{
+    ViewData["Title"] = "Dashboard";
+    ViewData["PageTitle"] = "Dashboard";
+    ViewData["AdminSection"] = "dashboard";
+    Layout = "_AdminLayout";
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="adm-metric tile-primary">
+            <span class="adm-metric-icon"><i class="ti ti-users"></i></span>
+            <div>
+                <p class="adm-metric-label">Пользователи</p>
+                <p class="adm-metric-value">@Model.UsersTotal</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="adm-metric tile-success">
+            <span class="adm-metric-icon"><i class="ti ti-book"></i></span>
+            <div>
+                <p class="adm-metric-label">Курсы</p>
+                <p class="adm-metric-value">@Model.CoursesTotal</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="adm-metric tile-info">
+            <span class="adm-metric-icon"><i class="ti ti-school"></i></span>
+            <div>
+                <p class="adm-metric-label">Записи на курсы</p>
+                <p class="adm-metric-value">@Model.EnrollmentsTotal</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="adm-metric tile-warning">
+            <span class="adm-metric-icon"><i class="ti ti-certificate"></i></span>
+            <div>
+                <p class="adm-metric-label">Сертификаты</p>
+                <p class="adm-metric-value">@Model.CertificatesTotal</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="adm-card">
+            <div class="adm-card-head"><h5>Последние записи на курсы</h5></div>
+            <table class="adm-table">
+                <thead>
+                    <tr><th>Студент</th><th>Курс</th><th>Прогресс</th><th>Когда</th></tr>
+                </thead>
+                <tbody>
+                @foreach (var e in Model.LatestEnrollments)
+                {
+                    <tr>
+                        <td>@(e.Student?.FullName ?? e.Student?.Email)</td>
+                        <td>@e.Course.Title</td>
+                        <td>@e.ProgressPercent.ToString("0.#")%</td>
+                        <td class="text-muted">@e.EnrolledAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                    </tr>
+                }
+                @if (Model.LatestEnrollments.Count == 0)
+                {
+                    <tr><td colspan="4" class="text-center text-muted py-4">Пока никого нет</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="adm-card">
+            <div class="adm-card-head"><h5>Новые пользователи</h5></div>
+            <table class="adm-table">
+                <thead>
+                    <tr><th>Email</th><th>Имя</th><th>Когда</th></tr>
+                </thead>
+                <tbody>
+                @foreach (var u in Model.LatestUsers)
+                {
+                    <tr>
+                        <td><a class="adm-link" href="/admin/users?q=@u.Email">@u.Email</a></td>
+                        <td>@u.FullName</td>
+                        <td class="text-muted">@u.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")</td>
+                    </tr>
+                }
+                @if (Model.LatestUsers.Count == 0)
+                {
+                    <tr><td colspan="3" class="text-center text-muted py-4">—</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

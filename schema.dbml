@@ -1,0 +1,209 @@
+// EduPlatform LMS — ER schema (v0.1)
+// Вставь содержимое на https://dbdiagram.io/d
+
+// ============ ИДЕНТИТИ ============
+
+Table Users {
+  Id uuid [pk]
+  Email varchar [unique, not null]
+  EmailConfirmed bool [default: false]
+  PasswordHash varchar [not null]
+  FullName varchar
+  Bio text
+  AvatarUrl varchar
+  TwoFactorEnabled bool [default: false]
+  IsBlocked bool [default: false]
+  Credits decimal [default: 0]      // виртуальные кредиты
+  CreatedAt datetime
+}
+
+Table Roles {
+  Id uuid [pk]
+  Name varchar [unique]            // Student / Instructor / Admin
+}
+
+Table UserRoles {
+  UserId uuid [ref: > Users.Id]
+  RoleId uuid [ref: > Roles.Id]
+  Indexes { (UserId, RoleId) [pk] }
+}
+
+// ============ ПОДПИСКИ ИНСТРУКТОРА ============
+
+Table SubscriptionPlans {
+  Id int [pk, increment]
+  Code varchar [unique]            // Free / Basic / Pro
+  MaxCourses int                   // 3 / 10 / null
+  CommissionPercent decimal        // 30 / 20 / 10
+  AllowsTests bool                 // false / true / true
+  PriceCredits decimal             // 0 / X / Y
+}
+
+Table InstructorSubscriptions {
+  Id uuid [pk]
+  InstructorId uuid [ref: > Users.Id]
+  PlanId int [ref: > SubscriptionPlans.Id]
+  StartedAt datetime
+  ExpiresAt datetime
+  IsActive bool
+}
+
+// ============ ТРАНЗАКЦИИ (кредиты + продажи) ============
+
+Table Transactions {
+  Id uuid [pk]
+  UserId uuid [ref: > Users.Id]
+  Amount decimal                    // + пополнение, - списание
+  Type varchar                      // TopUp / CoursePurchase / PlatformCommission / SubscriptionPayment / InstructorPayout
+  RelatedCourseId uuid [ref: > Courses.Id, null]
+  CreatedAt datetime
+  Description varchar
+}
+
+// ============ КУРСЫ ============
+
+Table Categories {
+  Id int [pk, increment]
+  Name varchar
+  Slug varchar [unique]
+}
+
+Table Courses {
+  Id uuid [pk]
+  Title varchar [not null]
+  Slug varchar [unique]
+  Description text
+  CoverUrl varchar
+  CategoryId int [ref: > Categories.Id]
+  InstructorId uuid [ref: > Users.Id]
+  Price decimal
+  Language varchar                  // ru / en
+  IsPublished bool [default: false]
+  AverageRating decimal [default: 0]
+  StudentsCount int [default: 0]
+  CreatedAt datetime
+  UpdatedAt datetime
+}
+
+Table Sections {
+  Id uuid [pk]
+  CourseId uuid [ref: > Courses.Id]
+  Title varchar
+  OrderIndex int
+}
+
+Table Lessons {
+  Id uuid [pk]
+  SectionId uuid [ref: > Sections.Id]
+  Title varchar
+  VideoUrl varchar
+  TextContent text
+  OrderIndex int
+}
+
+Table LessonAttachments {
+  Id uuid [pk]
+  LessonId uuid [ref: > Lessons.Id]
+  FileUrl varchar
+  FileName varchar
+}
+
+// ============ ЗАПИСИ И ПРОГРЕСС ============
+
+Table Enrollments {
+  Id uuid [pk]
+  StudentId uuid [ref: > Users.Id]
+  CourseId uuid [ref: > Courses.Id]
+  EnrolledAt datetime
+  ProgressPercent decimal [default: 0]
+  CompletedAt datetime
+  Indexes { (StudentId, CourseId) [unique] }
+}
+
+Table LessonProgress {
+  Id uuid [pk]
+  EnrollmentId uuid [ref: > Enrollments.Id]
+  LessonId uuid [ref: > Lessons.Id]
+  IsCompleted bool
+  CompletedAt datetime
+}
+
+// ============ ТЕСТЫ ============
+
+Table Tests {
+  Id uuid [pk]
+  LessonId uuid [ref: > Lessons.Id]   // тест привязан к уроку
+  Title varchar
+  PassingScore int                    // % для прохождения
+}
+
+Table Questions {
+  Id uuid [pk]
+  TestId uuid [ref: > Tests.Id]
+  Text text
+  Type varchar                        // SingleChoice / MultipleChoice / Text
+  OrderIndex int
+}
+
+Table AnswerOptions {
+  Id uuid [pk]
+  QuestionId uuid [ref: > Questions.Id]
+  Text varchar
+  IsCorrect bool
+}
+
+Table TestAttempts {
+  Id uuid [pk]
+  TestId uuid [ref: > Tests.Id]
+  StudentId uuid [ref: > Users.Id]
+  Score int
+  IsPassed bool
+  StartedAt datetime
+  FinishedAt datetime
+}
+
+Table StudentAnswers {
+  Id uuid [pk]
+  AttemptId uuid [ref: > TestAttempts.Id]
+  QuestionId uuid [ref: > Questions.Id]
+  SelectedOptionId uuid [ref: > AnswerOptions.Id, null]
+  TextAnswer text
+}
+
+// ============ СЕРТИФИКАТЫ И ОТЗЫВЫ ============
+
+Table Certificates {
+  Id uuid [pk]
+  StudentId uuid [ref: > Users.Id]
+  CourseId uuid [ref: > Courses.Id]
+  IssuedAt datetime
+  CertificateNumber varchar [unique]
+  Indexes { (StudentId, CourseId) [unique] }
+}
+
+Table Reviews {
+  Id uuid [pk]
+  CourseId uuid [ref: > Courses.Id]
+  StudentId uuid [ref: > Users.Id]
+  Rating int                          // 1..5
+  Text text
+  IsApproved bool [default: false]    // модерация админом
+  CreatedAt datetime
+  Indexes { (CourseId, StudentId) [unique] }
+}
+
+// ============ УВЕДОМЛЕНИЯ ============
+
+Table Notifications {
+  Id uuid [pk]
+  UserId uuid [ref: > Users.Id]
+  Title varchar
+  Message text
+  IsRead bool [default: false]
+  CreatedAt datetime
+}
+
+// ============ MongoDB (НЕ в SQL, для справки) ============
+// chat_messages   { _id, courseId, userId, text, sentAt }
+// http_logs       { _id, method, path, userId, statusCode, durationMs, timestamp }
+// user_action_logs{ _id, userId, action, payload, timestamp }

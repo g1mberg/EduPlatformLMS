@@ -1,93 +1,159 @@
-# Dreams
+# EduPlatform LMS
 
+> Учебная платформа онлайн-курсов: каталог, кабинеты студента/инструктора/админа, тесты с автоматической выдачей сертификатов, подписочные планы, 2FA. Pet-проект, .NET 10 / ASP.NET MVC / EF Core 10 / SQL Server.
 
+[![.NET](https://img.shields.io/badge/.NET-10%20preview-512BD4)](https://dotnet.microsoft.com/)
+[![EF Core](https://img.shields.io/badge/EF%20Core-10-512BD4)](https://learn.microsoft.com/ef/core/)
+[![Bootstrap](https://img.shields.io/badge/Bootstrap-5-7952B3?logo=bootstrap)](https://getbootstrap.com/)
+[![SQL Server](https://img.shields.io/badge/SQL%20Server-Express-CC2927?logo=microsoftsqlserver)](https://www.microsoft.com/en-us/sql-server)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Logs-47A248?logo=mongodb)](https://www.mongodb.com/)
 
-## Getting started
+---
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## О проекте
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+**EduPlatform** — LMS-платформа с тремя ролями (Student / Instructor / Admin) и полным циклом «купи подписку → создай курс → продавай → пройди тест → получи сертификат». Делалась как pet-проект, чтобы покрыть весь стандартный набор задач продуктовой разработки: аутентификация со 2FA, RBAC, доменная модель из ~20 сущностей, EF-миграции, файловое подтверждение email, локализация RU/EN, отдельная админка, NoSQL-логирование, custom CSS-фреймворк.
 
-## Add your files
+## Что внутри
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+- 🎓 **Каталог курсов** из БД — фильтры по категории и цене, поиск, 5 видов сортировки, пагинация.
+- 👨‍🏫 **Кабинет инструктора** — CRUD курсов c автогенерацией slug (транслит RU→latin), проверка лимита курсов по активной подписке (Free=3 / Basic=10 / Pro=∞).
+- 👩‍🎓 **Кабинет студента** — запись на курс, просмотр уроков (видео + текст), пошаговая отметка прогресса, пересчёт `ProgressPercent` после каждого действия.
+- ✅ **Тесты и сертификаты** — финальный тест с проходным баллом 70%, автоматическая выдача `Certificate` с уникальным номером при выполнении условий, страница сертификата с печатью.
+- 🔐 **Auth полный** — ASP.NET Identity (Guid keys), email confirmation через `.eml`-файлы (без SMTP в dev), TOTP-двухфакторка с QR-кодом.
+- 🛡 **Админка** в стиле Duralux — отдельный layout с собственным CSS (~250 LoC), dashboard с метриками, CRUD пользователей с начислением кредитов и блокировкой, CRUD категорий, редактирование планов подписок, просмотр MongoDB-логов.
+- 📊 **MongoDB-логи** — middleware пишет каждый HTTP-запрос в `http_logs`, ключевые действия (`login`, `enroll`, `admin.credits.grant`, …) — в `user_actions`. Graceful degradation: если Mongo выключен, приложение работает без логов и показывает warning в `/admin/logs`.
+- 🌐 **Локализация RU/EN** — `IStringLocalizer<SharedResource>`, `.resx`-файлы, переключение языка через `?culture=` или cookie, провайдеры в priority-order.
+
+## Стек
+
+| Слой        | Технологии |
+|-------------|-----------|
+| Backend     | ASP.NET MVC, .NET 10 (preview), Razor Views |
+| ORM         | Entity Framework Core 10 + Microsoft SQL Server Express |
+| Auth        | ASP.NET Identity `IdentityUser<Guid>` + `IdentityRole<Guid>`, email confirmation, 2FA TOTP (`otpauth://`) |
+| NoSQL       | MongoDB.Driver 3 (HTTP-логи, действия пользователя) |
+| Frontend    | Bootstrap 5, custom CSS (admin.css ≈ 250 LoC), Dreams LMS template для публички |
+| Локализация | `IStringLocalizer` + `.resx` (ru / en) + cookie/query provider |
+| Email (dev) | `FileEmailSender` пишет `.eml` в `App_Data/mail/` |
+
+## Скриншоты
+
+> Положу позже в `docs/screenshots/` — пока в репозитории только код.
+
+## Запуск локально
+
+### Требования
+
+- **.NET 10 SDK (preview)** — https://dotnet.microsoft.com/download/dotnet/10.0
+- **SQL Server Express** на `.\SQLEXPRESS` с Windows Auth
+- (опционально) **MongoDB** на `localhost:27017` — для просмотра логов в `/admin/logs`
+
+### Поехали
+
+```powershell
+git clone https://github.com/g1mberg/EduPlatformLMS.git
+cd EduPlatformLMS
+
+# Применить миграции (создаст БД EduPlatform на .\SQLEXPRESS)
+dotnet ef database update --project dreams/dreams.csproj
+
+# Запуск
+dotnet run --project dreams/dreams.csproj --no-launch-profile
+```
+
+Открыть http://localhost:5000.
+
+При первом запуске сидер автоматически создаст:
+- 3 роли (Student / Instructor / Admin)
+- 3 плана подписки (Free / Basic / Pro)
+- 8 категорий, демо-аккаунты, 12 курсов с уроками и 2 финальными тестами
+
+### Тестовые аккаунты
+
+| Email | Пароль | Роль |
+|---|---|---|
+| `admin@eduplatform.local` | `Admin!Pass1` | Admin |
+| `demo.instructor@eduplatform.local` | `DemoInstructor!1` | Instructor (12 seed-курсов) |
+
+Можно зарегистрировать любого студента — confirmation-письмо положится в `dreams/App_Data/mail/*.eml`, оттуда копируешь confirm-ссылку.
+
+### MongoDB (опционально)
+
+```powershell
+# Docker:
+docker run -d --name mongo-edu -p 27017:27017 mongo:7
+```
+
+Без Mongo приложение работает — middleware просто молча no-op, `/admin/logs` показывает warning.
+
+## Структура
 
 ```
-cd existing_repo
-git remote add origin http://gitlab.junior-teamlead.com/adolph_gosha/dreams.git
-git branch -M main
-git push -uf origin main
+dreams/
+├── Controllers/                — Account, Home, Courses, Instructor, Student, Admin, Language
+├── Data/
+│   ├── ApplicationDbContext.cs — IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
+│   └── DbSeeder.cs             — runtime-сидер (категории, demo-юзеры, курсы, уроки, тесты)
+├── Models/
+│   ├── Entities/               — ~20 POCO: ApplicationUser, Course/Section/Lesson,
+│   │                             Test/Question/AnswerOption/TestAttempt/StudentAnswer,
+│   │                             Enrollment/LessonProgress, SubscriptionPlan/
+│   │                             InstructorSubscription, Transaction, Certificate, и т.д.
+│   ├── Account/                — RegisterVM, LoginVM, TwoFactorVMs
+│   └── Courses/                — CatalogVM, CourseFormVM, StudentLessonVM, и т.д.
+├── Services/
+│   ├── IEmailSender + FileEmailSender
+│   ├── CertificateService      — выдача сертификата при 100% прогрессе и сданных тестах
+│   ├── SlugHelper              — RU→latin транслит
+│   ├── MongoLogService         — singleton с graceful degradation
+│   ├── HttpLoggingMiddleware   — пишет HTTP-запросы в http_logs
+│   └── UserActionLogger        — scoped wrapper для аудита
+├── Migrations/Init             — все таблицы Identity + домен
+├── Resources/                  — SharedResource.{ru,en}.resx
+├── Views/
+│   ├── Shared/_Layout, _InnerLayout, _DashboardLayout, _AuthLayout, _AdminLayout
+│   ├── Account/ Courses/ Student/ Instructor/ Admin/ Home/ Subscription/
+│   └── _ViewImports.cshtml     — @inject IHtmlLocalizer<SharedResource> L
+├── wwwroot/
+│   ├── assets/                 — шаблон Dreams LMS + custom admin.css
+│   └── ...
+├── App_Data/mail/              — dev-почта в .gitignore
+├── Program.cs                  — DI, Identity, миграции, миддлвары, локализация, WebEncoders
+└── appsettings.json            — ConnStr, Email, MongoDB, App
 ```
 
-## Integrate with your tools
+## Реализованные пункты ТЗ
 
-- [ ] [Set up project integrations](http://gitlab.junior-teamlead.com/adolph_gosha/dreams/-/settings/integrations)
+- ✅ Каталог курсов из БД (фильтры/поиск/сорт/пагинация)
+- ✅ CRUD курсов для инструктора с лимитом по подписке
+- ✅ Запись на курс, прогресс, страницы уроков, отметка пройденного
+- ✅ Финальный тест с автовыдачей сертификата
+- ✅ Email confirmation + 2FA TOTP
+- ✅ Админка: dashboard, users (кредиты + блокировка), courses, categories CRUD, plans, subscriptions
+- ✅ MongoDB-логи (HTTP + user actions) с graceful degradation
+- ✅ Локализация RU/EN
 
-## Collaborate with your team
+## TODO / Roadmap
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+- [ ] SignalR-чат курса (история сообщений в MongoDB)
+- [ ] CRUD теста для инструктора (сейчас только сидер)
+- [ ] Покупка подписки за кредиты с реальным списанием
+- [ ] Wizard добавления курса в 5 шагов
+- [ ] Реальный SMTP вместо `FileEmailSender`
+- [ ] Clean Architecture: вынести Domain / Application / Infrastructure / Web
+- [ ] Полная локализация всех вьюх (сейчас покрыты nav и часть auth)
 
-## Test and Deploy
+## Подводные камни
 
-Use the built-in continuous integration in GitLab.
+Что наступил по пути — собрано в [CLAUDE.md](CLAUDE.md). Самые показательные:
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+- **.NET 10 Razor энкодит кириллицу в `&#x...`** по умолчанию. Лечится `WebEncoderOptions` с `UnicodeRanges.All`.
+- **`@section` — зарезервированное слово Razor**, нельзя использовать как имя переменной в `@foreach` — `@section.Title` парсится как директива.
+- **bool-checkbox без TagHelper** требует строгого порядка `<input type=checkbox>` ПЕРЕД `<input type=hidden>`.
+- **`MapStaticAssets()` в .NET 10** работает по build-time манифесту — переключил на `UseStaticFiles()`.
+- **SQL Server multiple cascade paths** — пришлось ставить `Restrict / NoAction` на FK к `User`.
 
-***
+## Лицензия
 
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+[MIT](LICENSE)

@@ -1,0 +1,135 @@
+@model IReadOnlyList<dreams.Models.Entities.Course>
+@{
+    ViewData["Title"] = "Мои курсы";
+    ViewData["DashboardArea"] = "instructor";
+    Layout = "_DashboardLayout";
+
+    var used = (int)(ViewData["CoursesUsed"] ?? 0);
+    var limit = ViewData["CoursesLimit"] as int?;
+    var limitText = limit.HasValue ? $"{used} / {limit}" : $"{used} / ∞";
+    var atLimit = limit.HasValue && used >= limit.Value;
+    var toast = TempData["Toast"] as string;
+    var limitError = TempData["LimitError"] as string;
+}
+
+<div class="breadcrumb-bar text-center">
+    <div class="container">
+        <h2 class="breadcrumb-title mb-2">Мои курсы</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb justify-content-center mb-0">
+                <li class="breadcrumb-item"><a href="/">Главная</a></li>
+                <li class="breadcrumb-item active">Кабинет инструктора</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container">
+
+        @if (!string.IsNullOrEmpty(toast))
+        {
+            <div class="alert alert-success">@toast</div>
+        }
+        @if (!string.IsNullOrEmpty(limitError))
+        {
+            <div class="alert alert-warning">@limitError</div>
+        }
+
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-2">
+            <div>
+                <h4 class="mb-1">Курсы</h4>
+                <p class="text-muted mb-0">
+                    Использовано слотов: <span class="fw-semibold">@limitText</span>.
+                    <a href="/instructor/subscription" class="link-secondary">Сменить план</a>
+                </p>
+            </div>
+            <a href="/instructor/courses/new"
+               class="btn btn-secondary @(atLimit ? "disabled" : "")"
+               aria-disabled="@(atLimit ? "true" : "false")">
+                <i class="isax isax-add me-1"></i>Создать курс
+            </a>
+        </div>
+
+        @if (Model.Count == 0)
+        {
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="isax isax-book fs-1 text-muted mb-3 d-block"></i>
+                    <h5>У вас пока нет курсов</h5>
+                    <p class="text-muted">Создайте первый курс, чтобы начать преподавать на платформе.</p>
+                    @if (!atLimit)
+                    {
+                        <a href="/instructor/courses/new" class="btn btn-secondary mt-2">Создать курс</a>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive card border-0 shadow-sm">
+                <table class="table mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Курс</th>
+                            <th>Категория</th>
+                            <th class="text-end">Цена</th>
+                            <th class="text-center">Студенты</th>
+                            <th class="text-center">Статус</th>
+                            <th class="text-end">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var c in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <img src="@c.CoverUrl" alt="" style="width: 64px; height: 48px; object-fit: cover; border-radius: 6px;">
+                                        <div>
+                                            <a href="/courses/@c.Slug" class="link-default fw-semibold">@c.Title</a>
+                                            <div class="text-muted fs-13">/@c.Slug</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>@c.Category.Name</td>
+                                <td class="text-end">@(c.Price == 0 ? "Бесплатно" : $"{c.Price:N0} ₽")</td>
+                                <td class="text-center">@c.StudentsCount</td>
+                                <td class="text-center">
+                                    @if (c.IsPublished)
+                                    {
+                                        <span class="badge text-bg-success">Опубликован</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge text-bg-secondary">Черновик</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-inline-flex gap-2">
+                                        <a href="/instructor/courses/@c.Id/edit" class="btn btn-sm btn-outline-secondary" title="Редактировать">
+                                            <i class="isax isax-edit"></i>
+                                        </a>
+                                        <form method="post" action="/instructor/courses/@c.Id/publish" class="m-0">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline-primary" title="@(c.IsPublished ? "Снять с публикации" : "Опубликовать")">
+                                                <i class="isax @(c.IsPublished ? "isax-eye-slash" : "isax-eye")"></i>
+                                            </button>
+                                        </form>
+                                        <form method="post" action="/instructor/courses/@c.Id/delete" class="m-0"
+                                              onsubmit="return confirm('Удалить курс «@c.Title»?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Удалить">
+                                                <i class="isax isax-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</section>

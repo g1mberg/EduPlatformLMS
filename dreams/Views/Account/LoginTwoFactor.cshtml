@@ -1,0 +1,58 @@
+@model dreams.Models.Account.TwoFactorLoginViewModel
+@{
+    ViewData["Title"] = "Двухфакторная аутентификация";
+    Layout = "_AuthLayout";
+}
+
+<div class="main-wrapper">
+    <div class="login-content">
+        <div class="row">
+            <div class="col-lg-6 login-bg d-none d-lg-flex">
+                <div class="login-carousel">
+                    <div class="login-carousel-section text-center">
+                        <div class="login-banner">
+                            <img src="~/assets/img/auth/auth-1.svg" class="img-fluid" alt="EduPlatform">
+                        </div>
+                        <div class="mentor-course">
+                            <h3 class="mb-2">Двухфакторный вход</h3>
+                            <p>Введите код из приложения-аутентификатора (Google Authenticator, Microsoft Authenticator и т.п.).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 login-wrap-bg">
+                <div class="login-wrapper">
+                    <div class="loginbox">
+                        <div class="w-100">
+                            <img src="~/assets/img/logo.svg" class="img-fluid mb-4" alt="EduPlatform">
+                            <h1 class="fs-32 fw-bold topic">Код подтверждения</h1>
+                            <p>Откройте приложение-аутентификатор и введите 6-значный код.</p>
+
+                            <form method="post" action="/account/login-2fa">
+                                @Html.AntiForgeryToken()
+                                <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+                                <input type="hidden" asp-for="ReturnUrl" />
+                                <input type="hidden" asp-for="RememberMe" />
+
+                                <div class="mb-3">
+                                    <label asp-for="Code" class="form-label"></label>
+                                    <input asp-for="Code" class="form-control form-control-lg" autocomplete="one-time-code" inputmode="numeric" placeholder="123 456" />
+                                    <span asp-validation-for="Code" class="text-danger small"></span>
+                                </div>
+
+                                <div class="d-grid">
+                                    <button class="btn btn-secondary btn-lg" type="submit">Войти</button>
+                                </div>
+                            </form>
+
+                            <div class="fs-14 mt-3">
+                                <a href="/account/login" class="link-2">Назад ко входу</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

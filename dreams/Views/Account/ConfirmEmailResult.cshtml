@@ -1,0 +1,45 @@
+@model (bool Success, string Message)
+@{
+    ViewData["Title"] = Model.Success ? "Email подтверждён" : "Ошибка подтверждения";
+    Layout = "_AuthLayout";
+}
+
+<div class="main-wrapper">
+    <div class="login-content">
+        <div class="row">
+            <div class="col-lg-6 login-bg d-none d-lg-flex">
+                <div class="login-carousel">
+                    <div class="login-carousel-section text-center">
+                        <div class="login-banner">
+                            <img src="~/assets/img/auth/auth-1.svg" class="img-fluid" alt="EduPlatform">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 login-wrap-bg">
+                <div class="login-wrapper">
+                    <div class="loginbox">
+                        <div class="w-100 text-center">
+                            <img src="~/assets/img/logo.svg" class="img-fluid mb-4" alt="EduPlatform">
+                            @if (Model.Success)
+                            {
+                                <i class="isax isax-tick-circle text-success" style="font-size: 64px;"></i>
+                                <h1 class="fs-32 fw-bold mt-3">Email подтверждён</h1>
+                                <p class="text-muted">@Model.Message</p>
+                                <a href="/account/login" class="btn btn-secondary mt-3">Войти</a>
+                            }
+                            else
+                            {
+                                <i class="isax isax-close-circle text-danger" style="font-size: 64px;"></i>
+                                <h1 class="fs-32 fw-bold mt-3">Не удалось подтвердить</h1>
+                                <p class="text-muted">@Model.Message</p>
+                                <a href="/account/login" class="btn btn-outline-secondary mt-3">Назад ко входу</a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,95 @@
+@{
+    var title = ViewData["Title"] as string;
+    var area = ViewData["AdminSection"] as string ?? "dashboard";
+    var pageTitle = ViewData["PageTitle"] as string ?? title ?? "Админка";
+
+    bool IsActive(string id) => area.Equals(id, StringComparison.OrdinalIgnoreCase);
+    string Cls(string id) => IsActive(id) ? "active" : "";
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@(string.IsNullOrEmpty(title) ? "Админка" : $"{title} | EduPlatform Admin")</title>
+
+    <link rel="shortcut icon" href="~/assets/img/favicon.png">
+    <link rel="stylesheet" href="~/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="~/assets/plugins/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="~/assets/plugins/tabler-icons/tabler-icons.css">
+    <link rel="stylesheet" href="~/assets/css/iconsax.css">
+    <link rel="stylesheet" href="~/assets/css/admin.css">
+
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+<div class="admin-wrap">
+
+    <aside class="adm-sidebar" id="admSidebar">
+        <a href="/admin" class="adm-brand text-decoration-none">
+            <span class="adm-brand-mark">EP</span>
+            <span class="adm-brand-text">EduPlatform</span>
+        </a>
+
+        <div class="adm-section">Главное</div>
+        <ul class="adm-nav">
+            <li class="@Cls("dashboard")"><a href="/admin"><i class="ti ti-dashboard"></i>Dashboard</a></li>
+        </ul>
+
+        <div class="adm-section">Управление</div>
+        <ul class="adm-nav">
+            <li class="@Cls("users")"><a href="/admin/users"><i class="ti ti-users"></i>Пользователи</a></li>
+            <li class="@Cls("courses")"><a href="/admin/courses"><i class="ti ti-book"></i>Курсы</a></li>
+            <li class="@Cls("categories")"><a href="/admin/categories"><i class="ti ti-tag"></i>Категории</a></li>
+            <li class="@Cls("plans")"><a href="/admin/plans"><i class="ti ti-crown"></i>Планы подписок</a></li>
+            <li class="@Cls("subscriptions")"><a href="/admin/subscriptions"><i class="ti ti-receipt"></i>Подписки</a></li>
+            <li class="@Cls("logs")"><a href="/admin/logs"><i class="ti ti-file-text"></i>Логи</a></li>
+        </ul>
+
+        <div class="adm-section">Аккаунт</div>
+        <ul class="adm-nav">
+            <li><a href="/"><i class="ti ti-external-link"></i>На сайт</a></li>
+            <li>
+                <a href="#" onclick="document.getElementById('admLogout').submit(); return false;">
+                    <i class="ti ti-logout"></i>Выйти
+                </a>
+                <form id="admLogout" method="post" action="/account/logout" class="d-none">
+                    @Html.AntiForgeryToken()
+                </form>
+            </li>
+        </ul>
+    </aside>
+
+    <div class="adm-main">
+        <header class="adm-topbar">
+            <div class="d-flex align-items-center gap-3">
+                <button class="adm-burger" onclick="document.getElementById('admSidebar').classList.toggle('open')" aria-label="menu">
+                    <i class="ti ti-menu-2"></i>
+                </button>
+                <h1 class="adm-page-title">@pageTitle</h1>
+            </div>
+            <div class="adm-user">
+                <span class="adm-avatar">@(User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "?")</span>
+                <span class="d-none d-md-inline">@User.Identity?.Name</span>
+            </div>
+        </header>
+
+        <main class="adm-content">
+            @if (TempData["Toast"] is string toast && !string.IsNullOrEmpty(toast))
+            {
+                <div class="alert alert-success">@toast</div>
+            }
+            @if (TempData["Error"] is string err && !string.IsNullOrEmpty(err))
+            {
+                <div class="alert alert-danger">@err</div>
+            }
+            @RenderBody()
+        </main>
+    </div>
+</div>
+
+<script src="~/assets/js/jquery-3.7.1.min.js"></script>
+<script src="~/assets/js/bootstrap.bundle.min.js"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

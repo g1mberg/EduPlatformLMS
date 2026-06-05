@@ -1,0 +1,71 @@
+@model dreams.Models.Courses.TakeTestViewModel
+@{
+    var c = Model.Course;
+    var t = Model.Test;
+    ViewData["Title"] = t.Title;
+    ViewData["DashboardArea"] = "student";
+    Layout = "_DashboardLayout";
+}
+
+<div class="breadcrumb-bar text-center">
+    <div class="container">
+        <h2 class="breadcrumb-title mb-2">@t.Title</h2>
+        <nav>
+            <ol class="breadcrumb justify-content-center mb-0">
+                <li class="breadcrumb-item"><a href="/student/courses">Мои курсы</a></li>
+                <li class="breadcrumb-item"><a href="/student/courses/@c.Slug">@c.Title</a></li>
+                <li class="breadcrumb-item active">Тест</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-9">
+
+                @if (Model.LastAttempt is not null)
+                {
+                    var a = Model.LastAttempt;
+                    <div class="alert @(a.IsPassed ? "alert-success" : "alert-warning") d-flex justify-content-between align-items-center">
+                        <div>
+                            Прошлая попытка: <strong>@a.Score%</strong> @(a.IsPassed ? "— тест сдан" : "— не сдан")
+                        </div>
+                        <small class="text-muted">@a.FinishedAt?.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</small>
+                    </div>
+                }
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <p class="text-muted">Проходной балл: <strong>@t.PassingScore%</strong>. Выберите по одному варианту в каждом вопросе.</p>
+
+                        <form method="post" action="/student/courses/@c.Slug/lessons/@Model.Lesson.Id/test">
+                            @Html.AntiForgeryToken()
+
+                            @foreach (var q in t.Questions.OrderBy(x => x.OrderIndex))
+                            {
+                                <div class="mb-4 p-3 border rounded">
+                                    <h6 class="mb-3">@q.OrderIndex. @q.Text</h6>
+                                    @foreach (var o in q.Options)
+                                    {
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="radio"
+                                                   name="q_@q.Id" id="o_@o.Id" value="@o.Id" required>
+                                            <label class="form-check-label" for="o_@o.Id">@o.Text</label>
+                                        </div>
+                                    }
+                                </div>
+                            }
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-secondary">Отправить ответы</button>
+                                <a href="/student/courses/@c.Slug" class="btn btn-outline-secondary">Отмена</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

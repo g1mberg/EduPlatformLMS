@@ -1,0 +1,37 @@
+@{
+    var title = ViewData["Title"] as string;
+}
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@(string.IsNullOrEmpty(title) ? "EduPlatform LMS" : $"{title} | EduPlatform LMS")</title>
+
+    <link rel="shortcut icon" href="~/assets/img/favicon.png">
+
+    <script src="~/assets/js/theme-script.js"></script>
+
+    <link rel="stylesheet" href="~/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="~/assets/plugins/fontawesome/css/fontawesome.min.css">
+    <link rel="stylesheet" href="~/assets/plugins/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="~/assets/plugins/feather/feather.css">
+    <link rel="stylesheet" href="~/assets/plugins/tabler-icons/tabler-icons.css">
+    <link rel="stylesheet" href="~/assets/css/iconsax.css">
+    <link rel="stylesheet" href="~/assets/css/style.css">
+
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+
+<body>
+    @RenderBody()
+
+    <script src="~/assets/js/jquery-3.7.1.min.js"></script>
+    <script src="~/assets/js/bootstrap.bundle.min.js"></script>
+    <script src="~/assets/js/script.js"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+
+</html>

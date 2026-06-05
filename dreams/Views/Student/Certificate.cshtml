@@ -1,0 +1,52 @@
+@model dreams.Models.Entities.Certificate
+@{
+    ViewData["Title"] = $"Сертификат №{Model.CertificateNumber}";
+    ViewData["DashboardArea"] = "student";
+    Layout = "_DashboardLayout";
+}
+
+@section Styles {
+    <style>
+        .cert-paper {
+            background: #fffdf7;
+            border: 12px double #c8a64b;
+            padding: 60px 50px;
+            position: relative;
+        }
+        .cert-title { font-family: Georgia, serif; letter-spacing: 6px; color: #1f2937; }
+        .cert-name  { font-family: Georgia, serif; font-size: 42px; color: #c8a64b; border-bottom: 2px solid #c8a64b; display: inline-block; padding: 0 24px 6px; }
+        .cert-meta  { color: #6b7280; font-size: 14px; }
+    </style>
+}
+
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <a href="/student/certificates" class="link-default">&larr; Все сертификаты</a>
+                    <button class="btn btn-outline-secondary" onclick="window.print()">
+                        <i class="isax isax-printer me-1"></i>Печать
+                    </button>
+                </div>
+
+                <div class="cert-paper text-center">
+                    <p class="cert-title text-uppercase fw-bold mb-2">Сертификат</p>
+                    <p class="cert-meta mb-4">EduPlatform LMS подтверждает, что</p>
+
+                    <p class="cert-name mb-4">@(Model.Student.FullName ?? Model.Student.Email)</p>
+
+                    <p class="cert-meta mb-2">успешно завершил(а) курс</p>
+                    <h3 class="mb-4">«@Model.Course.Title»</h3>
+
+                    <p class="cert-meta mb-1">Инструктор: <strong>@Model.Course.Instructor.FullName</strong></p>
+                    <p class="cert-meta mb-4">Дата выдачи: <strong>@Model.IssuedAt.ToLocalTime().ToString("dd MMMM yyyy")</strong></p>
+
+                    <p class="cert-meta mb-0">№ сертификата: <code>@Model.CertificateNumber</code></p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>

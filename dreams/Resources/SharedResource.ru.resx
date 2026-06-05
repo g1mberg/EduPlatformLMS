@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <!-- Nav -->
+  <data name="Nav.Home"><value>Главная</value></data>
+  <data name="Nav.Courses"><value>Курсы</value></data>
+  <data name="Nav.Subscriptions"><value>Подписки</value></data>
+  <data name="Nav.Login"><value>Войти</value></data>
+  <data name="Nav.Register"><value>Регистрация</value></data>
+  <data name="Nav.MyProfile"><value>Мой профиль</value></data>
+  <data name="Nav.MyCoursesStudent"><value>Мои курсы (студент)</value></data>
+  <data name="Nav.MyCoursesInstructor"><value>Мои курсы (инструктор)</value></data>
+  <data name="Nav.Subscription"><value>Подписка</value></data>
+  <data name="Nav.Security"><value>Безопасность</value></data>
+  <data name="Nav.Logout"><value>Выйти</value></data>
+  <data name="Nav.BackToSite"><value>На сайт</value></data>
+
+  <!-- Auth pages -->
+  <data name="Auth.LoginTitle"><value>Вход</value></data>
+  <data name="Auth.RegisterTitle"><value>Регистрация</value></data>
+  <data name="Auth.Email"><value>Email</value></data>
+  <data name="Auth.Password"><value>Пароль</value></data>
+  <data name="Auth.ConfirmPassword"><value>Подтвердите пароль</value></data>
+  <data name="Auth.FullName"><value>Имя</value></data>
+  <data name="Auth.RememberMe"><value>Запомнить меня</value></data>
+  <data name="Auth.LoginButton"><value>Войти</value></data>
+  <data name="Auth.RegisterButton"><value>Зарегистрироваться</value></data>
+  <data name="Auth.NoAccount"><value>Нет аккаунта?</value></data>
+  <data name="Auth.HaveAccount"><value>Уже есть аккаунт?</value></data>
+  <data name="Auth.ForgotPassword"><value>Забыли пароль?</value></data>
+
+  <!-- Catalog -->
+  <data name="Catalog.Title"><value>Каталог курсов</value></data>
+  <data name="Catalog.Search"><value>Поиск</value></data>
+  <data name="Catalog.Filters"><value>Фильтры</value></data>
+  <data name="Catalog.Reset"><value>Сбросить</value></data>
+  <data name="Catalog.Categories"><value>Категории</value></data>
+  <data name="Catalog.AllCategories"><value>Все категории</value></data>
+  <data name="Catalog.Price"><value>Цена</value></data>
+  <data name="Catalog.PriceAll"><value>Все</value></data>
+  <data name="Catalog.PriceFree"><value>Бесплатно</value></data>
+  <data name="Catalog.PricePaid"><value>Платные</value></data>
+  <data name="Catalog.SortNew"><value>Сначала новые</value></data>
+  <data name="Catalog.SortRating"><value>По рейтингу</value></data>
+  <data name="Catalog.SortPopular"><value>По популярности</value></data>
+  <data name="Catalog.SortPriceAsc"><value>Цена: по возрастанию</value></data>
+  <data name="Catalog.SortPriceDesc"><value>Цена: по убыванию</value></data>
+  <data name="Catalog.ShowingOf"><value>Показано {0}–{1} из {2}</value></data>
+  <data name="Catalog.NothingFound"><value>Ничего не найдено</value></data>
+  <data name="Catalog.Details"><value>Подробнее</value></data>
+  <data name="Catalog.Free"><value>Бесплатно</value></data>
+
+  <!-- Common -->
+  <data name="Common.Cancel"><value>Отмена</value></data>
+  <data name="Common.Save"><value>Сохранить</value></data>
+  <data name="Common.Delete"><value>Удалить</value></data>
+  <data name="Common.Edit"><value>Редактировать</value></data>
+  <data name="Common.Yes"><value>Да</value></data>
+  <data name="Common.No"><value>Нет</value></data>
+</root>

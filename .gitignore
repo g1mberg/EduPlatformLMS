@@ -1,0 +1,55 @@
+# ---- .NET / Visual Studio ----
+bin/
+obj/
+*.user
+*.suo
+*.userprefs
+*.dbmdl
+*.dbproj.schemaview
+*.jfm
+*.pfx
+*.publishsettings
+node_modules/
+.vs/
+.vscode/
+
+# Build artifacts
+*.dll
+*.exe
+*.pdb
+*.cache
+*.log
+*.tmp
+
+# Rider / Visual Studio for Mac
+.idea/
+*.DotSettings.user
+
+# ---- Generated / runtime data ----
+dreams/App_Data/mail/
+dreams/App_Data/keys/
+dreams/wwwroot/uploads/
+
+# Local SQLite/LiteDB dev DBs (если появятся)
+*.db
+*.sqlite
+*.litedb
+
+# ---- OS ----
+Thumbs.db
+.DS_Store
+Desktop.ini
+
+# ---- Secrets ----
+appsettings.*.Local.json
+appsettings.Production.json
+secrets.json
+.env
+.env.*
+
+# ---- Tooling ----
+.claude/
+TestResults/
+coverage/
+*.coverage
+*.coveragexml

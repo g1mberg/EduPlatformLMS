@@ -1,0 +1,84 @@
+@model dreams.Models.Courses.StudentCourseOverviewViewModel
+@{
+    var c = Model.Course;
+    ViewData["Title"] = c.Title;
+    ViewData["DashboardArea"] = "student";
+    Layout = "_DashboardLayout";
+}
+
+<div class="breadcrumb-bar text-center">
+    <div class="container">
+        <h2 class="breadcrumb-title mb-2">@c.Title</h2>
+        <nav>
+            <ol class="breadcrumb justify-content-center mb-0">
+                <li class="breadcrumb-item"><a href="/student/courses">Мои курсы</a></li>
+                <li class="breadcrumb-item active">@c.Title</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="mb-0">Ваш прогресс</h5>
+                            <span class="fw-semibold">@Model.CompletedCount / @Model.LessonsCount уроков</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-secondary"
+                                 style="width: @Model.Enrollment.ProgressPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></div>
+                        </div>
+                        <p class="mt-2 mb-0 text-muted fs-14">
+                            @Model.Enrollment.ProgressPercent.ToString("0.#")% завершено
+                            @if (Model.Enrollment.CompletedAt != null)
+                            {
+                                <span class="badge text-bg-success ms-2">Курс пройден</span>
+                            }
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="subs-title mb-3">Программа</h5>
+                        @foreach (var sec in c.Sections.OrderBy(s => s.OrderIndex))
+                        {
+                            <h6 class="fw-semibold mt-3 mb-2">@sec.Title</h6>
+                            <ul class="list-unstyled mb-0">
+                                @foreach (var lesson in sec.Lessons.OrderBy(l => l.OrderIndex))
+                                {
+                                    var done = Model.CompletedLessonIds.Contains(lesson.Id);
+                                    <li class="p-2 d-flex justify-content-between align-items-center border-bottom">
+                                        <span>
+                                            @if (done) { <i class="isax isax-tick-circle text-success me-2"></i> }
+                                            else       { <i class="isax isax-play-circle text-muted me-2"></i> }
+                                            @lesson.Title
+                                        </span>
+                                        <a href="/student/courses/@c.Slug/lessons/@lesson.Id" class="btn btn-sm btn-outline-secondary">
+                                            @(done ? "Повторить" : "Открыть")
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <img src="@c.CoverUrl" alt="" class="img-fluid rounded mb-3">
+                        <h6 class="mb-2">@c.Category.Name</h6>
+                        <p class="fs-13 text-muted mb-3">@c.Instructor.FullName</p>
+                        <p class="mb-0">@c.Description</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
