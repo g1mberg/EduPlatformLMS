@@ -1,10 +1,13 @@
 @model dreams.Models.Courses.CourseDetailsViewModel
+@using EduPlatform.Domain.Entities
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
 @{
     var c = Model.Course;
     ViewData["Title"] = c.Title;
     Layout = "_InnerLayout";
 
-    string PriceLabel(decimal p) => p == 0 ? L["Common.Free"].Value : $"{p:N0} ₽";
+    string PriceLabel(decimal p) => p == 0 ? L["Common.Free"].Value : $"{p:N0} кр.";
     var toast = TempData["Toast"] as string;
 }
 
@@ -268,10 +271,31 @@
                             }
                             else if (User?.Identity?.IsAuthenticated == true)
                             {
-                                <form method="post" action="/courses/@c.Slug/enroll" class="m-0">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-primary w-100">@L["Course.Enroll"]</button>
-                                </form>
+                                if (c.Price == 0)
+                                {
+                                    <form method="post" action="/courses/@c.Slug/enroll" class="m-0">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-primary w-100">@L["Course.Enroll"]</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    var me = await UserManager.GetUserAsync(User);
+                                    var myBalance = me?.Credits ?? 0m;
+                                    var enough = myBalance >= c.Price;
+                                    <form method="post" action="/courses/@c.Slug/enroll" class="m-0"
+                                          onsubmit="return confirm('Списать @c.Price.ToString("N0") кр. с баланса и записаться на курс?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-primary w-100" @(enough ? "" : "disabled")>
+                                            @if (enough) { @($"Купить за {c.Price:N0} кр.") }
+                                            else { @($"Нужно ещё {(c.Price - myBalance):N0} кр.") }
+                                        </button>
+                                    </form>
+                                    <p class="text-muted small mt-2 mb-0 text-center">
+                                        Баланс: <b>@myBalance.ToString("N0")</b> кр. ·
+                                        <a href="/instructor/subscription" class="link-secondary">пополнить</a>
+                                    </p>
+                                }
                             }
                             else
                             {

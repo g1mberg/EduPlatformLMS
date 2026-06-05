@@ -159,26 +159,93 @@ public class CoursesController : Controller
         }
 
         var already = await _db.Enrollments.AnyAsync(e => e.CourseId == course.Id && e.StudentId == userId);
-        if (!already)
+        if (already)
+            return RedirectToAction("CourseOverview", "Student", new { slug });
+
+        // ---------- ПЛАТНЫЙ КУРС: списываем кредиты + комиссия + перевод инструктору ----------
+        if (course.Price > 0)
         {
-            _db.Enrollments.Add(new Enrollment
+            var student = await _userManager.FindByIdAsync(userId.ToString());
+            if (student is null) return Challenge();
+
+            if (student.Credits < course.Price)
+            {
+                var need = course.Price - student.Credits;
+                TempData["Toast"] = $"Недостаточно кредитов. Цена курса {course.Price:N0}, у вас {student.Credits:N0} — нужно ещё {need:N0}.";
+                return RedirectToAction(nameof(Details), new { slug });
+            }
+
+            // Комиссия платформы — из активной подписки инструктора (Free=30%, Basic=20%, Pro=10%)
+            var instructorPlan = await _db.InstructorSubscriptions
+                .Include(s => s.Plan)
+                .Where(s => s.InstructorId == course.InstructorId && s.IsActive &&
+                            (s.ExpiresAt == null || s.ExpiresAt > DateTime.UtcNow))
+                .OrderByDescending(s => s.StartedAt)
+                .Select(s => s.Plan)
+                .FirstOrDefaultAsync();
+            var commissionPct = instructorPlan?.CommissionPercent ?? 30m;
+            var commission = Math.Round(course.Price * commissionPct / 100m, 2);
+            var net = course.Price - commission;
+
+            // Списываем у студента
+            student.Credits -= course.Price;
+            await _userManager.UpdateAsync(student);
+
+            // Зачисляем инструктору
+            var instructor = await _userManager.FindByIdAsync(course.InstructorId.ToString());
+            if (instructor is not null)
+            {
+                instructor.Credits += net;
+                await _userManager.UpdateAsync(instructor);
+            }
+
+            // Транзакция: поступление инструктору
+            _db.Transactions.Add(new Transaction
             {
                 Id = Guid.NewGuid(),
-                CourseId = course.Id,
-                StudentId = userId,
-                EnrolledAt = DateTime.UtcNow,
-                ProgressPercent = 0m
+                UserId = course.InstructorId,
+                Amount = net,
+                Type = TransactionType.CoursePurchase,
+                RelatedCourseId = course.Id,
+                Description = $"Покупка курса «{course.Title}» (студент {student.FullName ?? student.Email}); комиссия {commissionPct:0.#}%",
+                CreatedAt = DateTime.UtcNow
             });
-            course.StudentsCount += 1;
-            await _db.SaveChangesAsync();
-            await _audit.LogAsync("course.enroll", "Course", course.Id.ToString(), course.Title);
-            var student = await _userManager.FindByIdAsync(userId.ToString());
-            await _notifications.NotifyAsync(course.InstructorId,
-                $"Новая запись на курс «{course.Title}»",
-                $"{student?.FullName ?? "Студент"} только что записался на ваш курс.");
-            TempData["Toast"] = $"Вы записаны на курс «{course.Title}».";
+            // Транзакция: комиссия платформы (Amount берётся по модулю на стороне отчётов)
+            _db.Transactions.Add(new Transaction
+            {
+                Id = Guid.NewGuid(),
+                UserId = course.InstructorId,
+                Amount = -commission,
+                Type = TransactionType.PlatformCommission,
+                RelatedCourseId = course.Id,
+                Description = $"Комиссия {commissionPct:0.#}% с курса «{course.Title}»",
+                CreatedAt = DateTime.UtcNow
+            });
         }
 
+        _db.Enrollments.Add(new Enrollment
+        {
+            Id = Guid.NewGuid(),
+            CourseId = course.Id,
+            StudentId = userId,
+            EnrolledAt = DateTime.UtcNow,
+            ProgressPercent = 0m
+        });
+        course.StudentsCount += 1;
+        await _db.SaveChangesAsync();
+        await _audit.LogAsync(course.Price > 0 ? "course.buy" : "course.enroll", "Course", course.Id.ToString(),
+            course.Price > 0 ? $"{course.Price:N0} cr." : course.Title);
+
+        var s2 = await _userManager.FindByIdAsync(userId.ToString());
+        await _notifications.NotifyAsync(course.InstructorId,
+            course.Price > 0 ? $"Куплен курс «{course.Title}»" : $"Новая запись на курс «{course.Title}»",
+            course.Price > 0
+                ? $"{s2?.FullName ?? "Студент"} приобрёл ваш курс за {course.Price:N0} кр."
+                : $"{s2?.FullName ?? "Студент"} только что записался на ваш курс.");
+
+        TempData["Toast"] = course.Price > 0
+            ? $"Курс «{course.Title}» куплен за {course.Price:N0} кр."
+            : $"Вы записаны на курс «{course.Title}».";
         return RedirectToAction("CourseOverview", "Student", new { slug });
     }
 }

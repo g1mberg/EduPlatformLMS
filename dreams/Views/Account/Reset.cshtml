@@ -1,0 +1,76 @@
+@model dreams.Controllers.ResetPasswordViewModel
+@{
+    ViewData["Title"] = "Новый пароль";
+    Layout = "_AuthLayout";
+}
+
+<div class="main-wrapper">
+    <div class="login-content">
+        <div class="row">
+            <div class="col-lg-6 login-bg d-none d-lg-flex">
+                <div class="login-carousel">
+                    <div class="login-carousel-section">
+                        <div class="login-banner">
+                            <img src="~/assets/img/auth/auth-1.svg" class="img-fluid" alt="EduPlatform">
+                        </div>
+                        <div class="mentor-course text-center">
+                            <h3 class="mb-2">Задайте новый пароль</h3>
+                            <p>После сохранения вы сможете войти с новыми данными.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 login-wrap-bg">
+                <div class="login-wrapper">
+                    <div class="loginbox">
+                        <div class="w-100">
+                            <div class="d-flex align-items-center justify-content-between login-header">
+                                <img src="~/assets/img/logo.svg" class="img-fluid" alt="EduPlatform">
+                                <a href="/" class="link-1">На главную</a>
+                            </div>
+                            <h1 class="fs-32 fw-bold topic">Новый пароль</h1>
+
+                            @if (Model.Success)
+                            {
+                                <div class="alert alert-success">
+                                    <i class="isax isax-tick-circle me-1"></i>Пароль изменён. Можно входить.
+                                </div>
+                                <a href="/account/login" class="btn btn-secondary w-100">Войти</a>
+                            }
+                            else
+                            {
+                                @if (!string.IsNullOrEmpty(Model.Error))
+                                {
+                                    <div class="alert alert-danger fs-14">@Model.Error</div>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.UserId) && !string.IsNullOrEmpty(Model.Token))
+                                {
+                                    <form method="post" action="/account/reset" class="mb-3 pb-3">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="UserId" value="@Model.UserId" />
+                                        <input type="hidden" name="Token" value="@Model.Token" />
+                                        <div class="mb-3">
+                                            <label class="form-label">Новый пароль *</label>
+                                            <input type="password" name="Password" class="form-control form-control-lg" minlength="8" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Повторите *</label>
+                                            <input type="password" name="ConfirmPassword" class="form-control form-control-lg" minlength="8" required>
+                                        </div>
+                                        <div class="d-grid">
+                                            <button class="btn btn-secondary btn-lg" type="submit">Сохранить</button>
+                                        </div>
+                                    </form>
+                                }
+                                <div class="fs-14 text-center">
+                                    <a href="/account/login" class="link-2">Назад ко входу</a>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

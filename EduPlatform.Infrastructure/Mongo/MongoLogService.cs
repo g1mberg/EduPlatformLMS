@@ -117,4 +117,15 @@ public class MongoLogService
         }
         catch (Exception ex) { _logger.LogDebug(ex, "mongo action log read failed"); return new(); }
     }
+
+    public async Task<List<UserActionRecord>> GetUserActionsAsync(string userId, int limit = 50)
+    {
+        if (!IsEnabled || _actions is null) return new();
+        try
+        {
+            return await _actions.Find(x => x.UserId == userId)
+                .SortByDescending(x => x.At).Limit(limit).ToListAsync();
+        }
+        catch (Exception ex) { _logger.LogDebug(ex, "mongo user actions read failed"); return new(); }
+    }
 }

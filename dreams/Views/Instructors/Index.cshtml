@@ -4,7 +4,7 @@
     ViewData["Title"] = u.FullName ?? "Instructor";
     Layout = "_InnerLayout";
 
-    string PriceLabel(decimal p) => p == 0 ? L["Common.Free"].Value : $"{p:N0} ₽";
+    string PriceLabel(decimal p) => p == 0 ? L["Common.Free"].Value : $"{p:N0} кр.";
 }
 
 @section Styles {

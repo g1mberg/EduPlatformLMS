@@ -25,6 +25,7 @@ public class AccountController : Controller
     private readonly IConfiguration _config;
     private readonly UrlEncoder _urlEncoder;
     private readonly UserActionLogger _audit;
+    private readonly MongoLogService _mongo;
 
     public AccountController(
         UserManager<ApplicationUser> userManager,
@@ -32,7 +33,8 @@ public class AccountController : Controller
         IEmailSender email,
         IConfiguration config,
         UrlEncoder urlEncoder,
-        UserActionLogger audit)
+        UserActionLogger audit,
+        MongoLogService mongo)
     {
         _userManager = userManager;
         _signInManager = signInManager;
@@ -40,6 +42,7 @@ public class AccountController : Controller
         _config = config;
         _urlEncoder = urlEncoder;
         _audit = audit;
+        _mongo = mongo;
     }
 
     // ---------- LOGIN ----------
@@ -314,6 +317,97 @@ public class AccountController : Controller
     private static string FormatKey(string key) =>
         string.Join(' ', Enumerable.Range(0, (key.Length + 3) / 4).Select(i => key.Substring(i * 4, Math.Min(4, key.Length - i * 4))));
 
+    // ---------- FORGOT PASSWORD ----------
+
+    [HttpGet("forgot")]
+    public IActionResult Forgot() => View();
+
+    [HttpPost("forgot")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Forgot(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            ViewData["Toast"] = "Введите email.";
+            return View();
+        }
+
+        // Безопасный ответ: всегда говорим «если такой email есть — мы прислали письмо»
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user is not null && await _userManager.IsEmailConfirmedAsync(user))
+        {
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var encoded = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+            var baseUrl = _config["App:BaseUrl"]?.TrimEnd('/') ?? $"{Request.Scheme}://{Request.Host}";
+            var link = $"{baseUrl}/account/reset?userId={user.Id}&token={encoded}";
+
+            var html = $"""
+                <h2>Сброс пароля</h2>
+                <p>Здравствуйте, {System.Net.WebUtility.HtmlEncode(user.FullName ?? user.Email ?? "")}.</p>
+                <p>Чтобы задать новый пароль, перейдите по ссылке (действительна 24 часа):</p>
+                <p><a href="{link}">{link}</a></p>
+                <p>Если вы не запрашивали сброс — просто проигнорируйте письмо.</p>
+                """;
+            await _email.SendAsync(user.Email!, "EduPlatform LMS — сброс пароля", html);
+            await _audit.LogAsync("account.password.reset.request", "User", user.Id.ToString());
+        }
+
+        ViewData["Sent"] = true;
+        ViewData["Email"] = email;
+        return View();
+    }
+
+    [HttpGet("reset")]
+    public IActionResult Reset(string? userId, string? token)
+    {
+        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token))
+            return View(new ResetPasswordViewModel { Error = "Некорректная ссылка." });
+        return View(new ResetPasswordViewModel { UserId = userId, Token = token });
+    }
+
+    [HttpPost("reset")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Reset(ResetPasswordViewModel vm)
+    {
+        if (string.IsNullOrEmpty(vm.UserId) || string.IsNullOrEmpty(vm.Token))
+        {
+            vm.Error = "Некорректная ссылка.";
+            return View(vm);
+        }
+        if (string.IsNullOrEmpty(vm.Password) || vm.Password.Length < 8)
+        {
+            vm.Error = "Пароль должен быть не короче 8 символов.";
+            return View(vm);
+        }
+        if (vm.Password != vm.ConfirmPassword)
+        {
+            vm.Error = "Пароли не совпадают.";
+            return View(vm);
+        }
+        var user = await _userManager.FindByIdAsync(vm.UserId);
+        if (user is null)
+        {
+            vm.Error = "Пользователь не найден.";
+            return View(vm);
+        }
+        var decoded = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(vm.Token));
+        var res = await _userManager.ResetPasswordAsync(user, decoded, vm.Password);
+        if (!res.Succeeded)
+        {
+            vm.Error = "Ссылка устарела или некорректна. " + string.Join("; ", res.Errors.Select(e => e.Description));
+            return View(vm);
+        }
+
+        if (user.LockoutEnd.HasValue)
+        {
+            await _userManager.SetLockoutEndDateAsync(user, null);
+            await _userManager.ResetAccessFailedCountAsync(user);
+        }
+        await _audit.LogAsync("account.password.reset.complete", "User", user.Id.ToString());
+        vm.Success = true;
+        return View(vm);
+    }
+
     // ---------- PROFILE ----------
 
     [HttpGet("profile")]
@@ -325,6 +419,8 @@ public class AccountController : Controller
         var roles = await _userManager.GetRolesAsync(user);
         ViewData["Roles"] = roles;
         ViewData["Is2FA"] = await _userManager.GetTwoFactorEnabledAsync(user);
+        ViewData["MongoEnabled"] = _mongo.IsEnabled;
+        ViewData["Actions"] = await _mongo.GetUserActionsAsync(user.Id.ToString(), 30);
         return View(new ProfileViewModel
         {
             Email = user.Email ?? "",
@@ -406,4 +502,14 @@ public class ProfileViewModel
     public string? AvatarUrl { get; set; }
     public DateTime CreatedAt { get; set; }
     public decimal Credits { get; set; }
+}
+
+public class ResetPasswordViewModel
+{
+    public string? UserId { get; set; }
+    public string? Token { get; set; }
+    public string Password { get; set; } = "";
+    public string ConfirmPassword { get; set; } = "";
+    public bool Success { get; set; }
+    public string? Error { get; set; }
 }

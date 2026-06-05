@@ -3,7 +3,7 @@
     ViewData["Title"] = L["Catalog.Title"].Value;
     Layout = "_InnerLayout";
 
-    string PriceLabel(decimal p) => p == 0 ? L["Catalog.Free"].Value : $"{p:N0} ₽";
+    string PriceLabel(decimal p) => p == 0 ? L["Catalog.Free"].Value : $"{p:N0} кр.";
     string CatLink(string? slug) => Url.Action("Index", "Courses", new {
         search = Model.Search, category = slug, price = Model.Price, sort = Model.Sort
     })!;

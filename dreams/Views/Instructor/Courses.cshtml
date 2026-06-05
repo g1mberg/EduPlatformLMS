@@ -98,7 +98,7 @@
                                     </div>
                                 </td>
                                 <td>@c.Category.Name</td>
-                                <td class="text-end">@(c.Price == 0 ? L["Common.Free"].Value : $"{c.Price:N0} ₽")</td>
+                                <td class="text-end">@(c.Price == 0 ? L["Common.Free"].Value : $"{c.Price:N0} кр.")</td>
                                 <td class="text-center">@c.StudentsCount</td>
                                 <td class="text-center">
                                     @if (c.IsPublished)

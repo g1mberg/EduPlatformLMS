@@ -1,4 +1,5 @@
 @model dreams.Controllers.ProfileViewModel
+@using EduPlatform.Infrastructure.Mongo
 @{
     ViewData["Title"] = "Профиль";
     ViewData["DashboardArea"] = "student";
@@ -6,6 +7,29 @@
     var roles = ViewData["Roles"] as IList<string> ?? new List<string>();
     var is2fa = (bool)(ViewData["Is2FA"] ?? false);
     var toast = TempData["Toast"] as string;
+    var actions = ViewData["Actions"] as List<UserActionRecord> ?? new();
+    var mongoEnabled = (bool)(ViewData["MongoEnabled"] ?? false);
+
+    string ActionLabel(string a) => a switch
+    {
+        "login.success" => "Вход выполнен",
+        "login.requires_2fa" => "Вход — запрошен 2FA",
+        "register" => "Регистрация",
+        "course.enroll" => "Запись на курс",
+        "course.buy" => "Покупка курса",
+        "course.review" => "Оставлен отзыв",
+        "course.review.delete" => "Удалён отзыв",
+        "subscription.buy" => "Куплена подписка",
+        "account.password.change" => "Смена пароля",
+        "account.password.reset.request" => "Запрос сброса пароля",
+        "account.password.reset.complete" => "Сброс пароля выполнен",
+        "course.create" => "Создан курс",
+        "course.wizard.create" => "Курс создан мастером",
+        "test.save" => "Сохранён тест",
+        "test.delete" => "Удалён тест",
+        "lesson.attachment.upload" => "Загружен файл к уроку",
+        _ => a
+    };
 }
 
 <div class="breadcrumb-bar text-center">
@@ -89,6 +113,42 @@
                             </div>
                             <button type="submit" class="btn btn-primary"><i class="isax isax-tick-circle me-1"></i>Сохранить</button>
                         </form>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-body">
+                        <h5 class="mb-3">История действий</h5>
+                        @if (!mongoEnabled)
+                        {
+                            <p class="text-muted small mb-0">MongoDB не подключена — история действий недоступна.</p>
+                        }
+                        else if (actions.Count == 0)
+                        {
+                            <p class="text-muted small mb-0">История пуста — действия начнут писаться сразу как вы что-то сделаете.</p>
+                        }
+                        else
+                        {
+                            <ul class="list-group list-group-flush">
+                                @foreach (var a in actions)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-start px-0">
+                                        <div>
+                                            <span class="fw-semibold">@ActionLabel(a.Action)</span>
+                                            @if (!string.IsNullOrEmpty(a.TargetType))
+                                            {
+                                                <span class="text-muted small ms-2">@a.TargetType@(a.TargetId is null ? "" : "#" + a.TargetId.Substring(0, Math.Min(8, a.TargetId.Length)))</span>
+                                            }
+                                            @if (!string.IsNullOrEmpty(a.Details))
+                                            {
+                                                <div class="text-muted small">@a.Details</div>
+                                            }
+                                        </div>
+                                        <small class="text-muted text-nowrap ms-2">@a.At.ToLocalTime().ToString("dd.MM HH:mm")</small>
+                                    </li>
+                                }
+                            </ul>
+                        }
                     </div>
                 </div>
 

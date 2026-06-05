@@ -49,7 +49,7 @@
                 </td>
                 <td>@c.Category.Name</td>
                 <td class="small">@c.Instructor.FullName</td>
-                <td class="text-end">@(c.Price == 0 ? "Бесплатно" : $"{c.Price:N0} ₽")</td>
+                <td class="text-end">@(c.Price == 0 ? "Бесплатно" : $"{c.Price:N0} кр.")</td>
                 <td class="text-center">@c.StudentsCount</td>
                 <td>
                     @if (c.IsPublished)

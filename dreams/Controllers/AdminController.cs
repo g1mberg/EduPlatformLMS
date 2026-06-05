@@ -356,6 +356,42 @@ public class AdminController : Controller
         return View(vm);
     }
 
+    // ---------- CERTIFICATES ----------
+
+    [HttpGet("certificates")]
+    public async Task<IActionResult> Certificates(string? q = null)
+    {
+        var query = _db.Certificates
+            .Include(c => c.Student)
+            .Include(c => c.Course)
+            .AsQueryable();
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            var s = q.Trim();
+            query = query.Where(c =>
+                c.CertificateNumber.Contains(s) ||
+                c.Student.Email!.Contains(s) ||
+                c.Student.FullName!.Contains(s) ||
+                c.Course.Title.Contains(s));
+        }
+        ViewData["Q"] = q;
+        var list = await query.OrderByDescending(c => c.IssuedAt).Take(200).ToListAsync();
+        return View(list);
+    }
+
+    [HttpPost("certificates/{id:guid}/revoke")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RevokeCertificate(Guid id)
+    {
+        var cert = await _db.Certificates.FindAsync(id);
+        if (cert is null) return NotFound();
+        _db.Certificates.Remove(cert);
+        await _db.SaveChangesAsync();
+        await _audit.LogAsync("admin.cert.revoke", "Certificate", id.ToString(), cert.CertificateNumber);
+        TempData["Toast"] = $"Сертификат {cert.CertificateNumber} отозван.";
+        return RedirectToAction(nameof(Certificates));
+    }
+
     // ---------- REVIEWS (модерация) ----------
 
     [HttpGet("reviews")]

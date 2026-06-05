@@ -1,0 +1,71 @@
+@model IReadOnlyList<EduPlatform.Domain.Entities.Certificate>
+@{
+    ViewData["Title"] = "Сертификаты";
+    ViewData["PageTitle"] = "Выданные сертификаты";
+    ViewData["AdminSection"] = "certificates";
+    Layout = "_AdminLayout";
+    var q = ViewData["Q"] as string;
+    var toast = TempData["Toast"] as string;
+}
+
+@if (!string.IsNullOrEmpty(toast))
+{
+    <div class="alert alert-info">@toast</div>
+}
+
+<div class="adm-card">
+    <div class="adm-card-head d-flex justify-content-between align-items-center gap-2 flex-wrap">
+        <h5 class="mb-0">Сертификаты (@Model.Count)</h5>
+        <form method="get" action="/admin/certificates" class="d-flex gap-2" style="max-width: 360px;">
+            <input name="q" value="@q" class="form-control form-control-sm" placeholder="Поиск по № / email / курсу"/>
+            <button class="btn btn-sm btn-outline-secondary">Найти</button>
+        </form>
+    </div>
+    <div class="adm-card-body p-0">
+        @if (Model.Count == 0)
+        {
+            <p class="text-muted text-center py-4 mb-0">Сертификатов нет</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Дата выдачи</th>
+                            <th>Номер</th>
+                            <th>Студент</th>
+                            <th>Курс</th>
+                            <th class="text-end">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var c in Model)
+                        {
+                            <tr>
+                                <td class="text-muted small">@c.IssuedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                                <td><span class="badge text-bg-success font-monospace">@c.CertificateNumber</span></td>
+                                <td>@c.Student.FullName<br><span class="text-muted small">@c.Student.Email</span></td>
+                                <td><a href="/courses/@c.Course.Slug" class="link-default">@c.Course.Title</a></td>
+                                <td class="text-end">
+                                    <div class="d-inline-flex gap-1">
+                                        <a href="/student/certificates/@c.Id" target="_blank" class="btn btn-sm btn-outline-secondary" title="Открыть">
+                                            <i class="isax isax-eye"></i>
+                                        </a>
+                                        <form method="post" action="/admin/certificates/@c.Id/revoke" class="m-0"
+                                              onsubmit="return confirm('Отозвать сертификат @c.CertificateNumber? Студент сможет получить его повторно при условии пройденного курса.');">
+                                            @Html.AntiForgeryToken()
+                                            <button class="btn btn-sm btn-outline-danger" title="Отозвать">
+                                                <i class="isax isax-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
