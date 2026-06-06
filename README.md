@@ -1,6 +1,6 @@
 # EduPlatform LMS
 
-> Учебная платформа онлайн-курсов: каталог, кабинеты студента/инструктора/админа, тесты с автовыдачей сертификатов, подписки за виртуальные кредиты, real-time чат курса и push-уведомления, 2FA, MailKit-SMTP. Pet-проект, .NET 10 / ASP.NET MVC / EF Core 10 / SQL Server / MongoDB / SignalR, **Clean Architecture (4 проекта)**.
+> Учебная платформа онлайн-курсов: каталог, кабинеты студента/инструктора/админа, тесты с автовыдачей сертификатов, подписки за виртуальные кредиты, real-time чат курса и push-уведомления, 2FA, MailKit-SMTP. Pet-проект, .NET 10 / ASP.NET MVC / EF Core 10 / SQL Server / MongoDB / SignalR.
 
 [![.NET](https://img.shields.io/badge/.NET-10%20preview-512BD4)](https://dotnet.microsoft.com/)
 [![EF Core](https://img.shields.io/badge/EF%20Core-10-512BD4)](https://learn.microsoft.com/ef/core/)
@@ -51,8 +51,6 @@
 - 📧 **Реальный SMTP через MailKit** с graceful fallback в `.eml` файлы при ошибке/без конфига. Секреты через `user-secrets`
 - 🌐 **Локализация RU/EN** — `IStringLocalizer<SharedResource>`, `.resx`, ~150 ключей, переключение через `?culture=` или cookie
 - 📜 **История действий** в профиле — последние 30 user_actions с человекочитаемыми названиями
-- 🏗 **Clean Architecture** — 4 проекта (Domain / Application / Infrastructure / Web) с правильным направлением зависимостей через интерфейсы
-
 ## Стек
 
 | Слой | Технология |
@@ -65,41 +63,6 @@
 | Email | MailKit (SMTP) с fallback на `FileEmailSender` (.eml в `App_Data/mail/`) |
 | Frontend | Bootstrap 5, custom CSS (admin.css ≈ 250 LoC, кастомный home hero), Dreams LMS template для прочего |
 | Локализация | `IStringLocalizer` + `.resx` (ru / en) с cookie/query provider |
-
-## Архитектура (Clean)
-
-```
-EduPlatform.slnx
-├── EduPlatform.Domain/         — POCO-сущности, Microsoft.Identity для ApplicationUser
-│   └── Entities/               — Course, Section, Lesson, Test, Question, Enrollment,
-│                                 Certificate, Review, Notification, Transaction, Subscription...
-│
-├── EduPlatform.Application/    — Бизнес-логика, не знает про EF/SignalR конкретно
-│   ├── Abstractions/
-│   │   ├── IApplicationDbContext.cs   — все DbSet<T> + SaveChangesAsync
-│   │   ├── INotificationPusher.cs     — push real-time без знания о SignalR
-│   │   └── IEmailSender.cs
-│   └── Services/
-│       ├── CertificateService.cs      — выдача сертификата по условиям
-│       ├── NotificationService.cs     — пишет в БД + дёргает Pusher
-│       └── SlugHelper.cs              — RU→latin транслит
-│
-├── EduPlatform.Infrastructure/ — Реализации тех. служб
-│   ├── Persistence/            — ApplicationDbContext (implements IApplicationDbContext), DbSeeder
-│   ├── Migrations/             — EF миграции
-│   ├── Email/                  — FileEmailSender, SmtpEmailSender (MailKit)
-│   ├── Mongo/                  — MongoLogService (graceful degradation)
-│   ├── Audit/                  — UserActionLogger
-│   ├── Logging/                — HttpLoggingMiddleware
-│   └── Chat/                   — ChatMessageStore (Mongo + in-memory fallback)
-│
-└── dreams/ (Web)               — Controllers, Views, Hubs, Program.cs
-    ├── Hubs/                   — CourseChatHub, NotificationsHub
-    ├── Infrastructure/         — SignalRNotificationPusher (implements INotificationPusher)
-    └── ...
-```
-
-Зависимости идут **только внутрь**: `Web → Application + Infrastructure + Domain`; `Infrastructure → Application + Domain`; `Application → Domain`. Бизнес-сервисы можно тестировать без EF и SignalR — они работают через интерфейсы.
 
 ## Запуск локально
 
@@ -194,33 +157,6 @@ docker run -d --name mongo-edu -p 27017:27017 mongo:7
 - `/admin/certificates` — реестр сертификатов
 - `/admin/finance` — финансы платформы (комиссия, обороты, топ-инструкторы, транзакции)
 - `/admin/logs` — MongoDB-логи
-
-## Сделано по ТЗ
-
-- ✅ Каталог из БД (фильтры/поиск/сортировка/пагинация)
-- ✅ CRUD курсов для инструктора + wizard в 5 шагов, лимит по подписке
-- ✅ Запись, прогресс, тесты (single/multi/**text**), сертификаты
-- ✅ Email confirmation + 2FA TOTP + **forgot password**
-- ✅ Платная запись на курс с реальным списанием кредитов и расчётом комиссии платформы
-- ✅ SignalR-чат курса + история в MongoDB
-- ✅ SignalR-уведомления (push в реальном времени, badge в шапке, страница ленты)
-- ✅ Отзывы и рейтинги с модерацией админом
-- ✅ Per-course аналитика + общий дашборд инструктора
-- ✅ Админка: dashboard / users / courses / categories / plans / subscriptions / reviews / certificates / finance / logs
-- ✅ MongoDB-логи + история действий пользователя в профиле
-- ✅ Локализация RU/EN
-- ✅ 404 / 403 / about — собственные страницы
-- ✅ Прикреплённые файлы к урокам (50 МБ)
-- ✅ Реальный SMTP через MailKit с fallback на .eml
-- ✅ Clean Architecture — 4 проекта
-
-## TODO / Roadmap
-
-- [ ] AJAX-пагинация каталога (сейчас обычная server-side с query-параметрами)
-- [ ] Глобальный кастомный ExceptionHandler middleware (сейчас стандартный)
-- [ ] Покрытие админки локализацией (сейчас покрыты публичные страницы)
-- [ ] Юнит-тесты для CertificateService / NotificationService
-- [ ] CI на GitHub Actions с автозапуском миграций и smoke-тестом
 
 ## Лицензия
 
