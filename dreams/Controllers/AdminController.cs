@@ -108,6 +108,64 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Users));
     }
 
+    [HttpPost("users/{id:guid}/role")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangeRole(Guid id, string role)
+    {
+        var allowed = new[] { "Student", "Instructor", "Admin" };
+        if (string.IsNullOrEmpty(role) || !allowed.Contains(role))
+        {
+            TempData["Error"] = "Недопустимая роль.";
+            return RedirectToAction(nameof(Users));
+        }
+
+        var u = await _userManager.FindByIdAsync(id.ToString());
+        if (u is null) return NotFound();
+
+        // Запрещаем менять роль самому себе — чтобы админ не разлогинился из админки.
+        var meId = _userManager.GetUserId(User);
+        if (string.Equals(meId, id.ToString(), StringComparison.OrdinalIgnoreCase))
+        {
+            TempData["Error"] = "Нельзя менять собственную роль.";
+            return RedirectToAction(nameof(Users));
+        }
+
+        var currentRoles = (await _userManager.GetRolesAsync(u)).ToArray();
+
+        // Защита от удаления последнего администратора.
+        if (currentRoles.Contains("Admin") && role != "Admin")
+        {
+            var adminCount = (await _userManager.GetUsersInRoleAsync("Admin")).Count;
+            if (adminCount <= 1)
+            {
+                TempData["Error"] = "Нельзя убрать роль у единственного администратора.";
+                return RedirectToAction(nameof(Users));
+            }
+        }
+
+        if (currentRoles.Length > 0)
+        {
+            var rm = await _userManager.RemoveFromRolesAsync(u, currentRoles);
+            if (!rm.Succeeded)
+            {
+                TempData["Error"] = "Не удалось снять старые роли: " + string.Join("; ", rm.Errors.Select(e => e.Description));
+                return RedirectToAction(nameof(Users));
+            }
+        }
+
+        var add = await _userManager.AddToRoleAsync(u, role);
+        if (!add.Succeeded)
+        {
+            TempData["Error"] = "Не удалось назначить роль: " + string.Join("; ", add.Errors.Select(e => e.Description));
+            return RedirectToAction(nameof(Users));
+        }
+
+        await _audit.LogAsync("admin.user.role.change", "User", u.Id.ToString(),
+            $"{u.Email}: [{string.Join(",", currentRoles)}] → {role}");
+        TempData["Toast"] = $"Роль {u.Email}: {role}";
+        return RedirectToAction(nameof(Users));
+    }
+
     [HttpPost("users/{id:guid}/block")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ToggleBlock(Guid id)

@@ -4,6 +4,7 @@
     Layout = "_DashboardLayout";
     var twoFa = (bool)(ViewData["TwoFactorEnabled"] ?? false);
     var emailOk = (bool)(ViewData["EmailConfirmed"] ?? false);
+    var isAdmin = (bool)(ViewData["IsAdmin"] ?? false);
     var toast = TempData["Toast"] as string;
 }
 
@@ -63,13 +64,30 @@
                         @if (twoFa)
                         {
                             <p>При входе вам потребуется ввести 6-значный код из приложения-аутентификатора.</p>
-                            <form method="post" action="/account/2fa-disable" onsubmit="return confirm('Отключить 2FA?');">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-outline-danger">Отключить 2FA</button>
-                            </form>
+                            @if (isAdmin)
+                            {
+                                <div class="alert alert-info mb-0">
+                                    <i class="isax isax-shield-tick me-1"></i>
+                                    2FA обязательна для роли <b>Admin</b> и не может быть отключена.
+                                </div>
+                            }
+                            else
+                            {
+                                <form method="post" action="/account/2fa-disable" onsubmit="return confirm('Отключить 2FA?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-outline-danger">Отключить 2FA</button>
+                                </form>
+                            }
                         }
                         else
                         {
+                            @if (isAdmin)
+                            {
+                                <div class="alert alert-warning">
+                                    <i class="isax isax-warning-2 me-1"></i>
+                                    Для роли <b>Admin</b> 2FA обязательна. Доступ к админке закрыт, пока не настроите.
+                                </div>
+                            }
                             <p>Защитите аккаунт ещё одним фактором — кодом из Google Authenticator или другого приложения.</p>
                             <a href="/account/2fa-setup" class="btn btn-secondary">Настроить 2FA</a>
                         }

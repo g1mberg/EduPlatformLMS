@@ -244,6 +244,7 @@ public class AccountController : Controller
         if (user is null) return Challenge();
         ViewData["TwoFactorEnabled"] = await _userManager.GetTwoFactorEnabledAsync(user);
         ViewData["EmailConfirmed"] = await _userManager.IsEmailConfirmedAsync(user);
+        ViewData["IsAdmin"] = await _userManager.IsInRoleAsync(user, "Admin");
         return View();
     }
 
@@ -307,6 +308,13 @@ public class AccountController : Controller
     {
         var user = await _userManager.GetUserAsync(User);
         if (user is null) return Challenge();
+
+        // Админам отключать 2FA нельзя — обязательна по ТЗ.
+        if (await _userManager.IsInRoleAsync(user, "Admin"))
+        {
+            TempData["Toast"] = "Администратору нельзя отключать 2FA.";
+            return RedirectToAction(nameof(Security));
+        }
 
         await _userManager.SetTwoFactorEnabledAsync(user, false);
         await _userManager.ResetAuthenticatorKeyAsync(user);

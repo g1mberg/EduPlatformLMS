@@ -120,6 +120,7 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<dreams.Infrastructure.RequireTwoFactorForAdminsMiddleware>();
 app.UseMiddleware<HttpLoggingMiddleware>();
 
 app.MapControllerRoute(

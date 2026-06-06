@@ -69,10 +69,19 @@
                     </div>
                 </td>
                 <td>
-                    @foreach (var r in roles)
-                    {
-                        <span class="adm-badge b-primary me-1">@r</span>
-                    }
+                    @{ var currentRole = roles.FirstOrDefault() ?? "Student"; }
+                    <form method="post" action="/admin/users/@u.Id/role" class="d-inline-flex align-items-center gap-1 m-0">
+                        @Html.AntiForgeryToken()
+                        <select name="role" class="form-select form-select-sm" style="width:130px;">
+                            <option value="Student"    selected="@(currentRole == "Student")">Student</option>
+                            <option value="Instructor" selected="@(currentRole == "Instructor")">Instructor</option>
+                            <option value="Admin"      selected="@(currentRole == "Admin")">Admin</option>
+                        </select>
+                        <button class="btn btn-adm-soft-primary btn-sm" title="Сменить роль"
+                                onclick="return confirm('Сменить роль для @u.Email?');">
+                            <i class="ti ti-user-cog"></i>
+                        </button>
+                    </form>
                 </td>
                 <td class="text-end fw-semibold">@u.Credits.ToString("N0")</td>
                 <td>
