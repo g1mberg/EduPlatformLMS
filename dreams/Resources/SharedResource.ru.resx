@@ -205,6 +205,10 @@
   <data name="Home.Title2"><value>инструкторов</value></data>
   <data name="Home.Sub"><value>Каталог из десятков курсов: программирование, дизайн, маркетинг, бизнес. Записывайтесь, проходите тесты и получайте сертификаты — всё в одной платформе.</value></data>
   <data name="Home.OpenCatalog"><value>Открыть каталог</value></data>
+  <data name="Home.PageTitle"><value>EduPlatform LMS — учитесь онлайн</value></data>
+  <data name="Home.SearchAllCats"><value>Все категории</value></data>
+  <data name="Home.SearchPlaceholder"><value>Искать курсы, темы, инструкторов…</value></data>
+  <data name="Home.SearchBtn"><value>Найти</value></data>
   <data name="Home.SignUp"><value>Зарегистрироваться</value></data>
   <data name="Home.BecomeInstructor"><value>Стать инструктором</value></data>
   <data name="Home.StatCoursesPub"><value>опубликованных курсов</value></data>

@@ -192,6 +192,10 @@
   <data name="Home.Title2"><value>instructors</value></data>
   <data name="Home.Sub"><value>Dozens of courses: programming, design, marketing, business. Enroll, take tests and earn certificates — all in one platform.</value></data>
   <data name="Home.OpenCatalog"><value>Open catalog</value></data>
+  <data name="Home.PageTitle"><value>EduPlatform LMS — learn online</value></data>
+  <data name="Home.SearchAllCats"><value>All categories</value></data>
+  <data name="Home.SearchPlaceholder"><value>Search courses, topics, instructors…</value></data>
+  <data name="Home.SearchBtn"><value>Search</value></data>
   <data name="Home.SignUp"><value>Sign up</value></data>
   <data name="Home.BecomeInstructor"><value>Become an instructor</value></data>
   <data name="Home.StatCoursesPub"><value>published courses</value></data>
